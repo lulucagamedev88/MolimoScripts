@@ -123,6 +123,8 @@ namespace MolimoByLulucaGameDev
         private float rollBufferTimer = 0f;
         private Vector3 rollDirection = Vector3.zero;
 
+        private bool isDashAttacking = false;
+
         private bool isExhausted = false;
 
         private bool isKnockedBack = false;
@@ -165,6 +167,7 @@ namespace MolimoByLulucaGameDev
 
         public bool IsRolling => isRolling;
         public float RollCooldownRemaining => rollCooldownTimer;
+        public bool IsDashAttacking => isDashAttacking;
 
         public bool IsExhausted => isExhausted;
         public bool IsKnockedBack => isKnockedBack;
@@ -379,6 +382,8 @@ namespace MolimoByLulucaGameDev
                 rollBufferTimer = 0f;
                 rollDirection = Vector3.zero;
 
+                isDashAttacking = false;
+
                 isExhausted = false;
 
                 isKnockedBack = false;
@@ -429,6 +434,7 @@ namespace MolimoByLulucaGameDev
                 isLanding = false;
                 landingTimer = 0f;
                 SetSprintingState(false);
+                isDashAttacking = false;
                 currentAnimatorSpeed = 0f;
                 currentPhysicalSpeed = 0f;
 
@@ -471,6 +477,8 @@ namespace MolimoByLulucaGameDev
             rollBufferTimer = 0f;
             rollDirection = Vector3.zero;
 
+            isDashAttacking = false;
+
             isKnockedBack = false;
             knockbackTimer = 0f;
             knockbackDirection = Vector3.zero;
@@ -505,6 +513,8 @@ namespace MolimoByLulucaGameDev
         {
             if (!isInitialized || !isActive || isSuspended) return;
             if (brain == null || !brain.IsAlive) return;
+
+            if (isDashAttacking) return;
 
             ApplyJumpPhysics();
 
@@ -923,6 +933,15 @@ namespace MolimoByLulucaGameDev
 
             if (animator != null && isExhaustedParameterHash != 0)
                 animator.SetBool(isExhaustedParameterHash, isExhausted);
+        }
+
+        public void SetDashAttacking(bool dashing)
+        {
+            if (isDashAttacking == dashing) return;
+
+            isDashAttacking = dashing;
+
+            if (dashing) SetSprintingState(false);
         }
 
         public void ApplyKnockback()

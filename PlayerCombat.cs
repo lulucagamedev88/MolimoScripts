@@ -125,6 +125,33 @@ namespace MolimoByLulucaGameDev
         [SerializeField] private float visionConeDotThreshold = 0.2f;
         [SerializeField] private LayerMask enemyLayer;
 
+        [Header("Dash Attack Settings")]
+        [Tooltip("if active, quando um inimigo entra na zona de deteção, o Attack faz o Player fazer dash direto até ele e aplica o golpe.")]
+        [SerializeField] private bool enableDashAttack = true;
+
+        [Tooltip("raio (m) da zona de ataque: o inimigo entra neste raio e o próximo Attack dispara o dash.")]
+        [Min(0f)]
+        [SerializeField] private float dashDetectionRadius = 5f;
+
+        [Tooltip("valor do dano aplicado ao inimigo quando o dash chega ao alvo.")]
+        [Min(0f)]
+        [SerializeField] private float dashAttackDamage = 15f;
+
+        [Tooltip("rapidez (m/s) do dash direto ao inimigo.")]
+        [Min(0.1f)]
+        [SerializeField] private float dashSpeed = 14f;
+
+        [Tooltip("distância (m) do inimigo em que o dash termina e o golpe é aplicado.")]
+        [Min(0f)]
+        [SerializeField] private float dashStopDistance = 1.2f;
+
+        [Tooltip("duração máxima (s) do dash antes de abortar (failsafe).")]
+        [Min(0.05f)]
+        [SerializeField] private float dashMaxDuration = 0.5f;
+
+        [Tooltip("GhostTrail usado para gerar os rastos do Player durante o dash.")]
+        [SerializeField] private GhostTrail ghostTrail;
+
         [Header("Block Settings")]
         [SerializeField] private float blockDuration = 0.4f;
         [SerializeField] private Collider shieldCollider;
@@ -139,6 +166,7 @@ namespace MolimoByLulucaGameDev
         [SerializeField] private float blockFacingSlerpSpeed = 20f;
 
         private PlayerBrain brain;
+        private PlayerMovement movement;
         private Rigidbody rb;
 
         private InputSystem_Actions inputActions;
@@ -166,6 +194,12 @@ namespace MolimoByLulucaGameDev
         private float currentStepSpeed = 0f;
         private Vector3 stepDirection = Vector3.forward;
 
+        private bool isDashAttackActive = false;
+        private float dashTimer = 0f;
+        private bool dashOwnedMovementLock = false;
+        private Vector3 dashDirection = Vector3.forward;
+        private Collider dashTarget = null;
+
         private bool isBlocking = false;
         private float blockTimer = 0f;
         private Transform currentBlockTarget = null;
@@ -192,6 +226,7 @@ namespace MolimoByLulucaGameDev
         public int CurrentAttackStep => (int)currentStage;
         public bool IsBlocking => isBlocking;
         public bool IsStepForwardActive => isStepForwardActive;
+        public bool IsDashAttackActive => isDashAttackActive;
         public float BlockDamageReduction => blockDamageReduction;
         public bool IsMashPenaltyActive => mashLockActive;
 
@@ -216,6 +251,12 @@ namespace MolimoByLulucaGameDev
             if (surfaceProbe == null) surfaceProbe = GetComponent<PlayerSurfaceProbe>();
             if (surfaceProbe == null) surfaceProbe = GetComponentInParent<PlayerSurfaceProbe>();
             if (surfaceProbe == null) surfaceProbe = GetComponentInChildren<PlayerSurfaceProbe>();
+
+            if (movement == null) movement = GetComponent<PlayerMovement>();
+            if (movement == null) movement = GetComponentInParent<PlayerMovement>();
+
+            if (ghostTrail == null) ghostTrail = GetComponent<GhostTrail>();
+            if (ghostTrail == null) ghostTrail = GetComponentInChildren<GhostTrail>(true);
 
             InitializeAnimatorParameters();
             ValidateCombatAnimatorParameters();
@@ -300,12 +341,12 @@ namespace MolimoByLulucaGameDev
                 stepForwardData = DefaultStepForward();
         }
 
-        private bool IsGroundAhead()
+        private bool IsGroundAhead(Vector3 direction)
         {
             if (!enableEdgeProtection) return true;
             if (surfaceProbe == null) return true;
             if (!surfaceProbe.IsGrounded) return true;
-            return surfaceProbe.HasSurfaceAhead(stepDirection);
+            return surfaceProbe.HasSurfaceAhead(direction);
         }
 
         public void SetHasWeapon(bool equipped)
@@ -386,20 +427,34 @@ namespace MolimoByLulucaGameDev
         public void TickCombatPhysics()
         {
             if (!isInitialized || !hasWeapon) return;
+
+            if (isDashAttackActive)
+            {
+                UpdateDashAttackTimers(Time.fixedDeltaTime);
+                return;
+            }
+
             UpdateStepForwardTimers(Time.fixedDeltaTime);
             ApplyStepForwardPhysics();
         }
 
         public void TickCombatLatePhysics()
         {
-            if (!hardenStepForward) return;
             if (!isInitialized || !hasWeapon) return;
+
+            if (isDashAttackActive)
+            {
+                ApplyDashAttackPhysics();
+                return;
+            }
+
+            if (!hardenStepForward) return;
             if (!isStepForwardActive) return;
             if (stepDelayTimer > 0f) return;
             if (stepDurationTimer <= 0f) return;
             if (rb == null) return;
 
-            if (!IsGroundAhead() || IsEnemyAheadOfStep())
+            if (!IsGroundAhead(stepDirection) || IsEnemyAheadOfStep())
             {
                 AbortStepForwardAtEdge();
                 return;
@@ -418,9 +473,8 @@ namespace MolimoByLulucaGameDev
             if (!animator.applyRootMotion) return;
 
             if (suppressRootMotionDuringStep
-                && isStepForwardActive
-                && stepDelayTimer <= 0f
-                && stepDurationTimer > 0f)
+                && ((isStepForwardActive && stepDelayTimer <= 0f && stepDurationTimer > 0f)
+                    || isDashAttackActive))
             {
                 return;
             }
@@ -755,7 +809,7 @@ namespace MolimoByLulucaGameDev
         {
             if (!isStepForwardActive || stepDelayTimer > 0f || rb == null) return;
 
-            if (!IsGroundAhead() || IsEnemyAheadOfStep())
+            if (!IsGroundAhead(stepDirection) || IsEnemyAheadOfStep())
             {
                 AbortStepForwardAtEdge();
                 return;
@@ -768,10 +822,162 @@ namespace MolimoByLulucaGameDev
                 stepDirection.z * currentStepSpeed);
         }
 
+        private Collider GetDashTargetCollider()
+        {
+            int count = Physics.OverlapSphereNonAlloc(transform.position, dashDetectionRadius, targetScanBuffer, enemyLayer);
+            if (count == 0) return null;
+
+            Collider closest = null;
+            float minDistance = float.MaxValue;
+
+            for (int i = 0; i < count; i++)
+            {
+                Collider col = targetScanBuffer[i];
+                if (col == null || !IsTargetAlive(col)) continue;
+
+                Vector3 dirToEnemy = col.transform.position - transform.position;
+                dirToEnemy.y = 0f;
+                float distance = dirToEnemy.magnitude;
+
+                if (distance <= dashStopDistance) continue;
+
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    closest = col;
+                }
+            }
+
+            return closest;
+        }
+
+        private bool TryStartDashAttack()
+        {
+            if (!enableDashAttack || isDashAttackActive) return false;
+
+            Collider target = GetDashTargetCollider();
+            if (target == null) return false;
+
+            Vector3 direction = target.transform.position - transform.position;
+            direction.y = 0f;
+            if (direction.sqrMagnitude <= 0.0001f) return false;
+
+            dashTarget = target;
+            dashDirection = direction.normalized;
+            dashTimer = dashMaxDuration;
+            isDashAttackActive = true;
+
+            SetRotation(Quaternion.LookRotation(dashDirection));
+
+            brain?.SetMovementInputLocked(true);
+            dashOwnedMovementLock = true;
+            movement?.SetDashAttacking(true);
+
+            if (ghostTrail != null)
+            {
+                float estimatedDuration = direction.magnitude / Mathf.Max(0.01f, dashSpeed);
+                ghostTrail.ShowGhostTrail(Mathf.Min(estimatedDuration, dashMaxDuration));
+            }
+
+            return true;
+        }
+
+        private void UpdateDashAttackTimers(float dt)
+        {
+            dashTimer -= dt;
+            if (dashTimer <= 0f) CancelDashAttack();
+        }
+
+        private void ApplyDashAttackPhysics()
+        {
+            if (rb == null || rb.isKinematic)
+            {
+                CancelDashAttack();
+                return;
+            }
+
+            if (dashTarget == null || !IsTargetAlive(dashTarget))
+            {
+                EndDashAttack(landed: false);
+                return;
+            }
+
+            Vector3 toTarget = dashTarget.transform.position - transform.position;
+            toTarget.y = 0f;
+            float distance = toTarget.magnitude;
+
+            if (distance <= dashStopDistance)
+            {
+                LandDashAttack();
+                return;
+            }
+
+            dashDirection = toTarget.normalized;
+
+            if (!IsGroundAhead(dashDirection))
+            {
+                EndDashAttack(landed: false);
+                return;
+            }
+
+            float verticalVelocity = rb.linearVelocity.y;
+            rb.linearVelocity = new Vector3(
+                dashDirection.x * dashSpeed,
+                verticalVelocity,
+                dashDirection.z * dashSpeed);
+        }
+
+        private void LandDashAttack()
+        {
+            if (rb != null && !rb.isKinematic)
+            {
+                float verticalVelocity = rb.linearVelocity.y;
+                rb.linearVelocity = new Vector3(0f, verticalVelocity, 0f);
+            }
+
+            IDamageable damageable = dashTarget != null
+                ? dashTarget.GetComponentInParent<IDamageable>()
+                : null;
+
+            bool targetWasAlive = damageable != null && damageable.CurrentHealth > 0f;
+
+            EndDashAttack(landed: true);
+
+            if (targetWasAlive)
+                damageable.TakeDamage(dashAttackDamage);
+
+            if (isAttacking || isBlocking) return;
+
+            EnterStage(AttackStage.Attack1, faceTarget: false);
+        }
+
+        private void EndDashAttack(bool landed)
+        {
+            bool ownedLock = dashOwnedMovementLock;
+
+            isDashAttackActive = false;
+            dashOwnedMovementLock = false;
+            dashTarget = null;
+            dashTimer = 0f;
+            dashDirection = Vector3.forward;
+
+            movement?.SetDashAttacking(false);
+
+            if (ownedLock && !landed && !isAttacking && !isBlocking)
+                brain?.SetMovementInputLocked(false);
+        }
+
+        public void CancelDashAttack()
+        {
+            if (isDashAttackActive) EndDashAttack(landed: false);
+        }
+
         private void HandleAttackInput()
         {
             if (currentStage == AttackStage.None)
             {
+                if (TryStartDashAttack()) return;
+
                 EnterStage(AttackStage.Attack1, faceTarget: true);
                 return;
             }
@@ -904,6 +1110,8 @@ namespace MolimoByLulucaGameDev
 
         private void ResetAttackState()
         {
+            if (isDashAttackActive) EndDashAttack(landed: false);
+
             isAttacking = false;
             currentStage = AttackStage.None;
             stageStartTime = 0f;
@@ -1004,6 +1212,7 @@ namespace MolimoByLulucaGameDev
             if (!isInitialized || !hasWeapon || !combatAllowed) return;
             if (brain != null && !brain.IsAlive) return;
             if (isBlocking) return;
+            if (isDashAttackActive) return;
 
             if (IsMashingBlocked()) return;
 
@@ -1024,6 +1233,7 @@ namespace MolimoByLulucaGameDev
         {
             if (!isInitialized || !hasShield || !combatAllowed) return;
             if (brain != null && !brain.IsAlive) return;
+            if (isDashAttackActive) return;
             HandleBlockInput();
         }
 
@@ -1031,6 +1241,12 @@ namespace MolimoByLulucaGameDev
         {
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(transform.position, groupDetectionRadius);
+
+            if (enableDashAttack)
+            {
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawWireSphere(transform.position, dashDetectionRadius);
+            }
 
             if (isBlocking)
             {
