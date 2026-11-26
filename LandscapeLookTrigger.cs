@@ -1,11 +1,9 @@
 using UnityEngine;
-using Unity.Cinemachine; // Cinemachine 3.x
+using Unity.Cinemachine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Provides the landscape look trigger component.
-    /// </summary>
+
     public class LandscapeLookTrigger : MonoBehaviour
     {
         [Header("camera of the landscape (Cinemachine)")]
@@ -30,7 +28,6 @@ namespace MolimoByLulucaGameDev
                 return;
             }
 
-            // ensures that starts in priority baixa
             landscapeCamera.Priority = lowPriority;
         }
 
@@ -50,8 +47,6 @@ namespace MolimoByLulucaGameDev
             if (playerInsideCount == 0) SetLandscapeActive(false);
         }
 
-        // safety: if the object is desativado with the Player inside,
-        // the landscape returns when the normal instead of remain travada.
         private void OnDisable()
         {
             playerInsideCount = 0;

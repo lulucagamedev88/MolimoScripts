@@ -2,12 +2,10 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Provides the enemy mother spider component.
-    /// </summary>
+
     public partial class EnemyMotherSpider
     {
-        // ---------- Impulse / VFX ----------
+
         private void GenerateImpulse()
         {
             if (impulseSource == null) return;
@@ -21,7 +19,6 @@ namespace MolimoByLulucaGameDev
             hitParticle.Play(true);
         }
 
-        // ---------- Audio ----------
         private void EnsureAudioSources()
         {
             if (loopAudioSource == null)
@@ -51,13 +48,6 @@ namespace MolimoByLulucaGameDev
             sfxAudioSource.PlayOneShot(clip, sfx.volume);
         }
 
-        /// <summary>
-        /// Toca um SFX num GameObject temporário INDEPENDENTE do pai.
-        /// Sobrevive à destruição da aranha — usado para o som de morte,
-        /// que precisa de tocar por completo mesmo que o corpo desapareça
-        /// poucos instantes depois.
-        /// Auto-destrói-se quando o clipe termina.
-        /// </summary>
         private void PlaySfxOneShotPersistent(SoundData sfx, Vector3 worldPosition)
         {
             if (sfx == null) return;
@@ -80,7 +70,6 @@ namespace MolimoByLulucaGameDev
             src.clip = clip;
             src.Play();
 
-            // duration real considerando the pitch applied + pequena folga
             float lifetime = clip.length / Mathf.Max(0.01f, Mathf.Abs(pitch));
             Object.Destroy(go, lifetime + 0.15f);
         }
@@ -109,7 +98,6 @@ namespace MolimoByLulucaGameDev
             source.loop = false;
         }
 
-        // ---------- Death ----------
         private void Die()
         {
             if (_isDead) return;
@@ -127,10 +115,6 @@ namespace MolimoByLulucaGameDev
             StopLoopSfx(loopAudioSource);
             _walkSoundPlaying = false;
 
-            // ------------------------------------------------------------
-            // SFX of death: num AudioSource PERSISTENTE (outside the spider),
-            // is sobreviver to the destruction of the GameObject parent.
-            // ------------------------------------------------------------
             PlaySfxOneShotPersistent(deathSfx, transform.position);
 
             SetBool(_hWalk, false);

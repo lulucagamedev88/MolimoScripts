@@ -3,9 +3,7 @@ using UnityEngine;
 namespace MolimoByLulucaGameDev
 {
     [DisallowMultipleComponent]
-    /// <summary>
-    /// Provides the poisonous plant component.
-    /// </summary>
+
     public class PoisonousPlant : MonoBehaviour
     {
         [Header("Damage")]

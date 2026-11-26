@@ -3,14 +3,10 @@ using UnityEngine.Serialization;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Provides the weapon vfx component.
-    /// </summary>
+
     public class WeaponVFX : MonoBehaviour
     {
-        /// <summary>
-        /// Defines the available vfxorientation values.
-        /// </summary>
+
         public enum VFXOrientation
         {
             Horizontal,
@@ -61,17 +57,11 @@ namespace MolimoByLulucaGameDev
             StopImpact();
         }
 
-        /// <summary>
-        /// Performs the enable sword trail operation.
-        /// </summary>
         public void EnableSwordTrail()
         {
             EnableSwordTrail(defaultOrientation, false);
         }
 
-        /// <summary>
-        /// Performs the enable sword trail operation.
-        /// </summary>
         public void EnableSwordTrail(VFXOrientation orientation, bool reverse)
         {
             if (swordTrail == null || swordTrailRenderer == null)
@@ -87,9 +77,6 @@ namespace MolimoByLulucaGameDev
             swordTrail.Play(true);
         }
 
-        /// <summary>
-        /// Performs the disable sword trail operation.
-        /// </summary>
         public void DisableSwordTrail()
         {
             if (swordTrail == null) return;
@@ -97,9 +84,6 @@ namespace MolimoByLulucaGameDev
             swordTrail.Stop(true, ParticleSystemStopBehavior.StopEmitting);
         }
 
-        /// <summary>
-        /// Plays impact.
-        /// </summary>
         public void PlayImpact()
         {
             if (impact == null)
@@ -112,9 +96,6 @@ namespace MolimoByLulucaGameDev
             impact.Play(true);
         }
 
-        /// <summary>
-        /// Performs the stop impact operation.
-        /// </summary>
         public void StopImpact()
         {
             if (impact == null) return;

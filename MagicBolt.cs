@@ -1,29 +1,10 @@
 using UnityEngine;
 
-// ⚠ uses the using correto is the your version of Cinemachine:
-using Unity.Cinemachine;        // Cinemachine 3.x
-// using Cinemachine;           // Cinemachine 2.x — descomenta this and comenta the of up if required
+using Unity.Cinemachine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// MagicBolt — projétil retro.
-    ///
-    /// Funcionalidades:
-    ///   - Voo em LINHA RETA (não persegue).
-    ///   - Move por MovePosition (kinematic) OU linearVelocity (dynamic).
-    ///   - Explode ao tocar em colliders cuja Layer esteja em <see cref="hitLayers"/>.
-    ///   - Timer "anti-acúmulo" (maxLifetime).
-    ///   - Dano opcional só ao Player.
-    ///   - SOM CONTÍNUO (zumbido em loop) durante o voo + som de explosão.
-    ///   - VFX + Cinemachine Impulse na explosão.
-    ///
-    /// Setup do prefab:
-    ///   - Rigidbody (kinematic OU dynamic, useGravity=false recomendado)
-    ///   - Collider IsTrigger=true OU colisor físico
-    ///   - (Opcional) AudioSource — se não existir, é criado automaticamente
-    ///   - (Opcional) CinemachineImpulseSource
-    /// </summary>
+
     [DisallowMultipleComponent]
     public class MagicBolt : MonoBehaviour
     {
@@ -47,9 +28,6 @@ namespace MolimoByLulucaGameDev
         [SerializeField] private GameObject impactVfxPrefab;
         [SerializeField] private float impactVfxLifetime = 3f;
 
-        // ============================================================
-        // sound continuous (hum)
-        // ============================================================
         [Header("sound continuous (hum in flight)")]
         [Tooltip("Clip of sound that toca in loop while the bola voa. " +
                  "Idealmente the clip curto (0.5–2s) that faca loop without 'click'.")]
@@ -77,7 +55,6 @@ namespace MolimoByLulucaGameDev
         [Header("Debug")]
         [SerializeField] private bool debugLogs = false;
 
-        // ---- state internal ----
         private Rigidbody rb;
         private Vector3 direction;
         private Vector3 startPosition;
@@ -91,9 +68,6 @@ namespace MolimoByLulucaGameDev
 
         public bool IsInitialized => initialized;
 
-        // ============================================================
-        // CICLO of health
-        // ============================================================
         private void Awake()
         {
             rb = GetComponent<Rigidbody>();
@@ -106,28 +80,22 @@ namespace MolimoByLulucaGameDev
 
             impulseSource = GetComponent<CinemachineImpulseSource>();
 
-            // ---- configuration of the AudioSource is sound continuous ----
-            // uses the AudioSource already existing in the prefab (if houver) or creates the novo.
             continuousAudioSource = GetComponent<AudioSource>();
             if (continuousAudioSource == null)
             {
                 continuousAudioSource = gameObject.AddComponent<AudioSource>();
             }
 
-            // ensures the properties corretas is the hum in loop.
             continuousAudioSource.playOnAwake = false;
             continuousAudioSource.loop = true;
             continuousAudioSource.spatialBlend = continuousSpatialBlend;
             continuousAudioSource.volume = continuousVolume;
-            // rolloff suave is 3D (ignored in 2D)
+
             continuousAudioSource.rolloffMode = AudioRolloffMode.Linear;
             continuousAudioSource.minDistance = 1f;
             continuousAudioSource.maxDistance = 25f;
         }
 
-        /// <summary>
-        /// Chamado pela WitchEye logo após o Instantiate.
-        /// </summary>
         public void Initialize(Vector3 dir, float speedOverride = -1f, float damageOverride = -1f)
         {
             if (dir.sqrMagnitude < 0.0001f) dir = transform.forward;
@@ -160,7 +128,6 @@ namespace MolimoByLulucaGameDev
                 }
             }
 
-            // ---- Arranca the sound continuous (hum) ----
             StartContinuousSound();
 
             if (debugLogs)
@@ -168,9 +135,6 @@ namespace MolimoByLulucaGameDev
                           $"life={maxLifetime}s, maxDist={maxDistance}", this);
         }
 
-        // ============================================================
-        // sound continuous
-        // ============================================================
         private void StartContinuousSound()
         {
             if (continuousAudioSource == null || continuousSound == null) return;
@@ -190,14 +154,10 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // ============================================================
-        // movement + TIMERS
-        // ============================================================
         private void FixedUpdate()
         {
             if (!initialized || destroyed || rb == null) return;
 
-            // ---- TIMER ANTI-accumulation ----
             lifeTimer += Time.fixedDeltaTime;
             if (lifeTimer >= maxLifetime)
             {
@@ -208,7 +168,6 @@ namespace MolimoByLulucaGameDev
                 return;
             }
 
-            // ---- TIMER of distance ----
             if (useVelocityMode)
             {
                 if ((rb.position - startPosition).sqrMagnitude >= maxDistance * maxDistance)
@@ -228,9 +187,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // ============================================================
-        // detection of collision
-        // ============================================================
         private void OnTriggerEnter(Collider other) => HandleHit(other);
         private void OnCollisionEnter(Collision collision) => HandleHit(collision.collider);
 
@@ -249,7 +205,6 @@ namespace MolimoByLulucaGameDev
                 return;
             }
 
-            // ---- damage when the Player ----
             PlayerBrain playerBrain = other.GetComponentInParent<PlayerBrain>();
             if (playerBrain != null && playerBrain.IsAlive)
             {
@@ -281,35 +236,25 @@ namespace MolimoByLulucaGameDev
             return false;
         }
 
-        // ============================================================
-        // explosion
-        // ============================================================
-        /// <summary>
-        /// Performs the explode operation.
-        /// </summary>
         public void Explode(bool realImpact = true)
         {
             if (destroyed) return;
             destroyed = true;
 
-            // ---- stops the sound continuous before tudo ----
             StopContinuousSound();
 
-            // ---- camera Shake ----
             bool shouldShake = shakeOnImpact
                             && impulseSource != null
                             && (realImpact || !shakeOnlyOnCollision);
 
             if (shouldShake) impulseSource.GenerateImpulse();
 
-            // ---- VFX of explosion ----
             if (impactVfxPrefab != null)
             {
                 GameObject vfx = Instantiate(impactVfxPrefab, transform.position, Quaternion.identity);
                 if (impactVfxLifetime > 0f) Destroy(vfx, impactVfxLifetime);
             }
 
-            // ---- sound of explosion ----
             if (impactSound != null)
                 AudioSource.PlayClipAtPoint(impactSound, transform.position, impactVolume);
 

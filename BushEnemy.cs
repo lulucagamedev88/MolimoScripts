@@ -3,9 +3,7 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Defines the available ambush state values.
-    /// </summary>
+
     public enum AmbushState
     {
         Hidden,
@@ -13,10 +11,6 @@ namespace MolimoByLulucaGameDev
         Finished
     }
 
-    /// <summary>
-    /// Inimigo de emboscada que se esconde em arbustos e corre em linha reta (eixo X) 
-    /// ao detectar o Player, causando dano ao contato e se ocultando ao final.
-    /// </summary>
     public class BushEnemy : MonoBehaviour, IDamageable
     {
         #region Fields & Inspector Properties
@@ -101,7 +95,6 @@ namespace MolimoByLulucaGameDev
             FindPlayerReference();
             startPosition = transform.position;
 
-            // ensures that the direction is only -1 or 1
             directionX = Mathf.Sign(directionX);
             if (directionX == 0) directionX = -1f;
 
@@ -122,7 +115,7 @@ namespace MolimoByLulucaGameDev
                     break;
 
                 case AmbushState.Finished:
-                    // already chegou when the end and if ocultou
+
                     break;
             }
         }
@@ -258,9 +251,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        /// <summary>
-        /// Performs the take damage operation.
-        /// </summary>
         public void TakeDamage(float amount, float knockbackDistance = 0f)
         {
             if (currentState == AmbushState.Finished) return;
@@ -278,7 +268,6 @@ namespace MolimoByLulucaGameDev
                 Instantiate(puffVFXPrefab, transform.position, Quaternion.identity, vfxContainer);
             }
 
-            // hides visualmente and disables the colisor is that the player not colida more
             if (visualTransform != null)
             {
                 visualTransform.gameObject.SetActive(false);

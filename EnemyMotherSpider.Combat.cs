@@ -3,19 +3,16 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Provides the enemy mother spider component.
-    /// </summary>
+
     public partial class EnemyMotherSpider
     {
-        // ---------- PlayerCombat runtime ----------
+
         private float _ramDamageCooldownTimer;
         private float _attackHitboxCooldownTimer;
         private readonly Collider[] _breakableHits = new Collider[32];
         private readonly Collider[] _attackHits = new Collider[16];
         private readonly HashSet<IDamageable> _breakableProcessed = new HashSet<IDamageable>();
 
-        // ---------- Hitbox ----------
         private void SetAttackHitboxActive(bool active)
         {
             if (attackHitbox == null) return;
@@ -76,7 +73,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // ---------- Damage to player ----------
         private void DealDamageToPlayer(float healthPercent)
         {
             PlayerHealth hp = GetPlayerHealth();
@@ -107,7 +103,6 @@ namespace MolimoByLulucaGameDev
             DealDamageToPlayer(stompDamagePercent);
         }
 
-        // ---------- Collision ----------
         private void OnCollisionEnter(Collision collision) => HandleCollision(collision);
         private void OnCollisionStay(Collision collision) => HandleCollision(collision);
 
@@ -119,7 +114,6 @@ namespace MolimoByLulucaGameDev
             if (_state == State.Chase) TryRamDamage(collision.collider);
         }
 
-        // ---------- Breakables ----------
         private void TryDamageBreakable(Collider other)
         {
             if (other == null) return;
@@ -158,10 +152,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // ---------- IDamageable ----------
-        /// <summary>
-        /// Performs the take damage operation.
-        /// </summary>
         public void TakeDamage(float amount, float knockbackDistance = -1f)
         {
             if (onlyDamageableViaWeakPoint)
@@ -177,9 +167,6 @@ namespace MolimoByLulucaGameDev
             ApplyDamageInternal(amount, knockbackDistance);
         }
 
-        /// <summary>
-        /// Applies damage from weak point.
-        /// </summary>
         public void ApplyDamageFromWeakPoint(float amount, float knockbackDistance, float multiplier)
         {
             if (amount <= 0f) return;

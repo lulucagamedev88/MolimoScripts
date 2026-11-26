@@ -2,9 +2,7 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Provides the enemy mother spider component.
-    /// </summary>
+
     public partial class EnemyMotherSpider
     {
         private void OnDrawGizmosSelected()
@@ -27,18 +25,15 @@ namespace MolimoByLulucaGameDev
                 Gizmos.DrawLine(transform.position, _homePosition);
             }
 
-            // Primary
             DrawPathGizmos(pathWaypoints, Color.magenta, "PRIMARY");
-            // Secondary
+
             DrawPathGizmos(secondaryPathWaypoints, Color.cyan, "SECONDARY");
 
-            // Position current in the path activo
             if (Application.isPlaying && HasUsablePath())
             {
                 Gizmos.color = _usingSecondaryPath ? Color.cyan : Color.magenta;
                 Gizmos.DrawWireSphere(GetPositionAtDistance(_currentPathDistance), 0.28f);
 
-                // if the Player Is detectado, shows the which path pertence
                 if (HasPlayer())
                 {
                     bool useSecondary = ShouldUseSecondaryPath(playerTarget.position);

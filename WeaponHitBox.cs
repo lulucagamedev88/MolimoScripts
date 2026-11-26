@@ -1,16 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// note: not add "using System;" neste ficheiro.
-// Causaria ambiguidade between System.Object/UnityEngine.Object and System.Random/UnityEngine.Random.
-
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>Dados of the effect visual chamável by nome (Animation Events).</summary>
+
     [System.Serializable]
-    /// <summary>
-    /// Provides the weapon vfxdata component.
-    /// </summary>
+
     public class WeaponVFXData
     {
         [Tooltip("Nome of the effect used in the Animation Event (ex: Swoosh1, Slash2, HeavyTrail, Block)")]
@@ -23,11 +18,8 @@ namespace MolimoByLulucaGameDev
         public GameObject vfxPrefab;
     }
 
-    /// <summary>Dados of sound of impact of the sword chamável by nome (Animation Events).</summary>
     [System.Serializable]
-    /// <summary>
-    /// Provides the sword impact sound data component.
-    /// </summary>
+
     public class SwordImpactSoundData
     {
         [Tooltip("Identificador used in the Animation Event SwordImpact(string) (ex: Flesh, Metal, Stone, Wood)")]
@@ -37,22 +29,10 @@ namespace MolimoByLulucaGameDev
         public SoundData[] sounds;
     }
 
-    /// <summary>
-    /// Arma completa num único script: hitbox + dano + VFX + áudio.
-    ///
-    /// ANIMATION EVENTS (nomes inalterados):
-    ///   Hitbox : EnableHit() | EnableHitWithKnockback(float) | DisableHit()
-    ///            SetCustomDamage(float) | SetKnockbackDistance(float)
-    ///   VFX    : SlashVFX(string) | StopVFX(string) | PlaySwoosh() | StopSwoosh()
-    ///            BlockVFX(string) | StopBlockVFX(string)
-    ///   Áudio  : PlaySwingSound() | PlayClashSound() | SwordImpact(string)
-    /// </summary>
     [RequireComponent(typeof(Collider))]
     public class WeaponHitBox : MonoBehaviour
     {
-        // ============================================================
-        // attack
-        // ============================================================
+
         [Header("settings of the attack")]
         [SerializeField] private float defaultDamage = 20f;
         [SerializeField] private float defaultKnockbackDistance = 0.5f;
@@ -65,9 +45,6 @@ namespace MolimoByLulucaGameDev
         [SerializeField] private LayerMask breakableLayerMask;
         [SerializeField] private LayerMask enemyLayerMask;
 
-        // ============================================================
-        // VFX
-        // ============================================================
         [Header("VFX — list of effects")]
         [Tooltip("effects chamados by nome in the Animation Events (SlashVFX / BlockVFX).")]
         [SerializeField] private List<WeaponVFXData> vfxList = new List<WeaponVFXData>();
@@ -85,9 +62,6 @@ namespace MolimoByLulucaGameDev
         [Tooltip("parent of the VFX instanciados. empty = search 'VFX Container' in the scene, otherwise root of the scene.")]
         [SerializeField] private Transform vfxContainer;
 
-        // ============================================================
-        // audio
-        // ============================================================
         [Header("audio of the sword (SoundData)")]
         [SerializeField] private SoundData[] swingSounds;
         [SerializeField] private SoundData[] clashSounds;
@@ -101,15 +75,9 @@ namespace MolimoByLulucaGameDev
         [Tooltip("if enabled, the sound of swing toca when the open the hitbox. DESLIGUE if use Animation Event 'WeaponSwing' in the Player.")]
         [SerializeField] private bool autoPlaySwingOnHitOpen = true;
 
-        // ============================================================
-        // DEBUG
-        // ============================================================
         [Header("Debug")]
         [SerializeField] private bool debugLogs = false;
 
-        // ============================================================
-        // state private
-        // ============================================================
         private Collider _col;
         private SFXPool _sfxPool;
 
@@ -122,9 +90,6 @@ namespace MolimoByLulucaGameDev
         private readonly Dictionary<string, WeaponVFXData> _vfxLookup = new Dictionary<string, WeaponVFXData>();
         private readonly Dictionary<string, SoundData[]> _swordImpactLookup = new Dictionary<string, SoundData[]>();
 
-        // ============================================================
-        // LIFECYCLE
-        // ============================================================
         private void Awake()
         {
             _col = GetComponent<Collider>();
@@ -161,13 +126,10 @@ namespace MolimoByLulucaGameDev
 
         private void OnDisable()
         {
-            // weapon desativada/desequipada never can remain with the hitbox open.
+
             if (_isHitWindowActive) DisableHit();
         }
 
-        // ============================================================
-        // SETUP: SFX / VFX
-        // ============================================================
         private void EnsureSFXContainer()
         {
             if (sfxContainer != null) return;
@@ -181,13 +143,12 @@ namespace MolimoByLulucaGameDev
             }
             else if (root != transform)
             {
-                // creates in the root shared is that PlayerSoundController and WeaponHitBox
-                // usem exactly the same pool (prevents pool duplicado).
+
                 var go = new GameObject("Player_SFX");
                 go.transform.SetParent(root, false);
                 sfxContainer = go.transform;
             }
-            // if the sword is root, not conseguimos decidir — adia is the 1.º Play.
+
         }
 
         private void EnsureSFXPool()
@@ -237,7 +198,6 @@ namespace MolimoByLulucaGameDev
             return key.ToLowerInvariant().Replace(" ", "").Replace("_", "").Trim();
         }
 
-        // Cache by nome normalizado (prevents alocar strings the each swing). in nomes repetidos vence the first.
         private void BuildVFXLookup()
         {
             _vfxLookup.Clear();
@@ -275,27 +235,14 @@ namespace MolimoByLulucaGameDev
             return data;
         }
 
-        // ============================================================
-        // ANIMATION EVENTS — HITBOX
-        // ============================================================
         #region Hitbox Events
-        /// <summary>
-        /// Sets custom damage.
-        /// </summary>
+
         public void SetCustomDamage(float damage) => _currentDamage = damage;
-        /// <summary>
-        /// Sets knockback distance.
-        /// </summary>
+
         public void SetKnockbackDistance(float dist) => _currentKnockbackDistance = dist;
 
-        /// <summary>
-        /// Performs the enable hit operation.
-        /// </summary>
         public void EnableHit() => OpenHitWindow();
 
-        /// <summary>
-        /// Performs the enable hit with knockback operation.
-        /// </summary>
         public void EnableHitWithKnockback(float knockbackDistance)
         {
             _currentKnockbackDistance = Mathf.Max(0f, knockbackDistance);
@@ -312,9 +259,6 @@ namespace MolimoByLulucaGameDev
             if (autoPlaySwingOnHitOpen) PlaySwingSound();
         }
 
-        /// <summary>
-        /// Performs the disable hit operation.
-        /// </summary>
         public void DisableHit()
         {
             _isHitWindowActive = false;
@@ -325,13 +269,8 @@ namespace MolimoByLulucaGameDev
         }
         #endregion
 
-        // ============================================================
-        // ANIMATION EVENTS — VFX
-        // ============================================================
         #region VFX Events
-        /// <summary>
-        /// Performs the slash vfx operation.
-        /// </summary>
+
         public void SlashVFX(string vfxName)
         {
             if (string.IsNullOrEmpty(vfxName))
@@ -361,9 +300,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        /// <summary>
-        /// Performs the stop vfx operation.
-        /// </summary>
         public void StopVFX(string vfxName)
         {
             WeaponVFXData data = FindVFXData(vfxName);
@@ -373,19 +309,12 @@ namespace MolimoByLulucaGameDev
             if (debugLogs) Debug.Log($"[WeaponHitBox] ParticleSystem '{vfxName}' stopped.", this);
         }
 
-        // Atalhos of compatibilidade
-        /// <summary>
-        /// Plays swoosh.
-        /// </summary>
         public void PlaySwoosh()
         {
             WeaponVFXData target = GetSwooshData();
             if (target != null) SlashVFX(target.vfxName);
         }
 
-        /// <summary>
-        /// Performs the stop swoosh operation.
-        /// </summary>
         public void StopSwoosh()
         {
             WeaponVFXData target = GetSwooshData();
@@ -400,24 +329,13 @@ namespace MolimoByLulucaGameDev
             return (target != null && !string.IsNullOrEmpty(target.vfxName)) ? target : null;
         }
 
-        // Atalhos of Block
-        /// <summary>
-        /// Performs the block vfx operation.
-        /// </summary>
         public void BlockVFX(string vfxName) => SlashVFX(vfxName);
-        /// <summary>
-        /// Performs the stop block vfx operation.
-        /// </summary>
+
         public void StopBlockVFX(string vfxName) => StopVFX(vfxName);
         #endregion
 
-        // ============================================================
-        // VFX of impact
-        // ============================================================
         #region Impact VFX
-        /// <summary>
-        /// Plays impact.
-        /// </summary>
+
         public void PlayImpact(Vector3 impactPoint, Quaternion rotation)
         {
             if (defaultImpactPrefab == null) return;
@@ -426,9 +344,6 @@ namespace MolimoByLulucaGameDev
             if (debugLogs) Debug.Log($"[WeaponHitBox] impact instanciado in {impactPoint}.", this);
         }
 
-        /// <summary>
-        /// Plays impact.
-        /// </summary>
         public void PlayImpact(Vector3 impactPoint, Quaternion rotation, int targetLayer)
         {
             if (defaultImpactPrefab == null) return;
@@ -442,13 +357,12 @@ namespace MolimoByLulucaGameDev
             PlayImpact(impactPoint, rotation);
         }
 
-        // Instancia inside the vfxContainer (if existir) and agenda the destruction by duration of the ParticleSystem.
         private GameObject SpawnVFX(GameObject prefab, Vector3 position, Quaternion rotation)
         {
             GameObject spawned = Instantiate(prefab, position, rotation);
 
             if (vfxContainer != null)
-                spawned.transform.SetParent(vfxContainer, true); // keeps position/rotation/scale mundiais
+                spawned.transform.SetParent(vfxContainer, true);
 
             ParticleSystem ps = spawned.GetComponentInChildren<ParticleSystem>();
             float destroyDelay = (ps != null) ? ps.main.duration + ps.main.startLifetime.constantMax : 2f;
@@ -458,22 +372,12 @@ namespace MolimoByLulucaGameDev
         }
         #endregion
 
-        // ============================================================
-        // audio
-        // ============================================================
         #region Sound API
-        /// <summary>
-        /// Plays swing sound.
-        /// </summary>
+
         public void PlaySwingSound() => PlayRandomSound(swingSounds, transform.position);
-        /// <summary>
-        /// Plays clash sound.
-        /// </summary>
+
         public void PlayClashSound() => PlayRandomSound(clashSounds, transform.position);
 
-        /// <summary>
-        /// Performs the sword impact operation.
-        /// </summary>
         public void SwordImpact(string impactName)
         {
             if (string.IsNullOrEmpty(impactName))
@@ -506,9 +410,6 @@ namespace MolimoByLulucaGameDev
         }
         #endregion
 
-        // ============================================================
-        // TRIGGERS & damage
-        // ============================================================
         #region Hit Handling
         private void OnTriggerEnter(Collider other) => ProcessTrigger(other);
         private void OnTriggerStay(Collider other) => ProcessTrigger(other);
@@ -531,12 +432,9 @@ namespace MolimoByLulucaGameDev
 
             target?.TakeDamage(_currentDamage, _currentKnockbackDistance);
 
-            // KNOCKBACK: the weapon only sends the pedido (direction + distance).
-            // who decide the back away is the own target (KnockbackReceiver).
             ApplyKnockbackTo(other);
         }
 
-        // direction = atacante -> target, achatada in Y. never depende of the forward of the target.
         private void ApplyKnockbackTo(Collider other)
         {
             if (_currentKnockbackDistance <= 0f) return;
@@ -547,7 +445,7 @@ namespace MolimoByLulucaGameDev
             Transform attacker = transform.root;
             Vector3 dir = ((Component)receiver).transform.position - attacker.position;
             dir.y = 0f;
-            if (dir.sqrMagnitude < 0.0001f) dir = attacker.forward; // target exactly in up of the atacante
+            if (dir.sqrMagnitude < 0.0001f) dir = attacker.forward;
 
             receiver.ApplyKnockback(dir, _currentKnockbackDistance, 0f);
         }
@@ -563,7 +461,6 @@ namespace MolimoByLulucaGameDev
             else Destroy(other.gameObject);
         }
 
-        // Regista the target (1 hit by attack) and dispara VFX of impact.
         private bool TryHit(Object hitKey, Collider other, out Vector3 spawnPoint)
         {
             spawnPoint = Vector3.zero;
@@ -579,7 +476,6 @@ namespace MolimoByLulucaGameDev
             return true;
         }
 
-        // Chave single of the target: the own component, otherwise the Rigidbody, otherwise the root.
         private static Object GetHitKey(Object preferred, Collider other)
         {
             if (preferred != null) return preferred;

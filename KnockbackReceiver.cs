@@ -2,18 +2,7 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Knockback por VELOCIDADE com decaimento (padrão da indústria):
-    ///  - a direção vem de quem bate (atacante -> alvo), nunca do forward do alvo;
-    ///  - a velocidade começa alta e cai até 0 (sensação de "impacto" + travagem);
-    ///  - durante o recuo o alvo fica em HIT STUN: a IA NÃO pode mexer-lhe.
-    ///
-    /// Funciona com Rigidbody (não-kinematic). Põe no Enemy.
-    ///
-    /// REGRA DE OURO: no script de IA/movimento do Enemy, no início do Update/FixedUpdate:
-    ///     if (knockback != null && knockback.IsStunned) return;
-    /// Se a IA continuar a escrever velocity/destination, ela apaga o recuo no mesmo frame.
-    /// </summary>
+
     [DisallowMultipleComponent]
     public class KnockbackReceiver : MonoBehaviour, IKnockbackReceiver
     {
@@ -56,9 +45,6 @@ namespace MolimoByLulucaGameDev
             if (rb == null) rb = GetComponent<Rigidbody>();
         }
 
-        /// <summary>
-        /// Applies knockback.
-        /// </summary>
         public void ApplyKnockback(Vector3 direction, float distance, float knockDuration)
         {
             if (weight <= 0f) return;
@@ -80,17 +66,15 @@ namespace MolimoByLulucaGameDev
             duration = knockDuration > 0f ? knockDuration : defaultDuration;
             elapsed = 0f;
 
-            // Decaimento linear: distance = v0 * T / 2  =>  v0 = 2 * d / T
             initialSpeed = 2f * d / duration;
 
             active = true;
             stunEndTime = Time.time + duration + extraStun;
 
             if (rb != null && !rb.isKinematic)
-                rb.linearVelocity = Vector3.zero; // clears the push of the StepForward / body the body
+                rb.linearVelocity = Vector3.zero;
         }
 
-        // --- Rigidbody: physics ---
         private void FixedUpdate()
         {
             if (!active) return;

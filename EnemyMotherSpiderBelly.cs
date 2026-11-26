@@ -3,25 +3,7 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Barriga (ponto fraco) da Aranha Mãe.
-    ///
-    /// COMO MONTAR:
-    ///   1. Cria um GameObject FILHO da aranha (ex.: "Belly") — NUNCA no mesmo
-    ///      GameObject do BoxCollider do corpo.
-    ///   2. Adiciona um Collider (Box ou Sphere) e marca Is Trigger.
-    ///   3. Adiciona este script ao mesmo objeto.
-    ///   4. NÃO adiciones Rigidbody ao filho — o Rigidbody é o da aranha.
-    ///   5. Tag "Enemy" no GameObject da barriga (importante!).
-    ///
-    /// COMO FUNCIONA:
-    ///   - Implementa IDamageable, para que o MolimoCombat a reconheça como alvo
-    ///     válido quando atinge o trigger durante o Rest da aranha.
-    ///   - Guarda os colliders válidos (Player e/ou Molimo) dentro do trigger.
-    ///   - Quando o golpe chega ao boss (TakeDamage), o boss pergunta a este
-    ///     script "há atacante válido dentro?". Se sim, dano passa como ponto fraco.
-    ///   - TakeDamage aqui reencaminha para o boss com o damageMultiplier.
-    /// </summary>
+
     public class EnemyMotherSpiderBelly : MonoBehaviour, IDamageable
     {
         [Header("references")]
@@ -58,19 +40,10 @@ namespace MolimoByLulucaGameDev
 
         public float DamageMultiplier => damageMultiplier;
 
-        // ============================================================
-        // IDamageable — delegation is the boss
-        // ============================================================
         public float CurrentHealth => boss != null ? boss.CurrentHealth : 0f;
         public float MaxHealth => boss != null ? boss.MaxHealth : 0f;
         public bool IsAlive => boss != null && boss.IsAlive;
 
-        /// <summary>
-        /// Dano direto na barriga. Se a barriga estiver exposta e o atacante
-        /// estiver dentro, o boss trata como ponto fraco e aplica o multiplicador.
-        /// Caso contrário, o dano é simplesmente descartado (a barriga só é
-        /// vulnerável durante o Rest).
-        /// </summary>
         public void TakeDamage(float amount, float knockbackDistance = -1f)
         {
             if (boss == null) return;
@@ -88,7 +61,6 @@ namespace MolimoByLulucaGameDev
                 Debug.Log($"[EnemyMotherBelly] damage fraco applied: {amount} x{damageMultiplier}.");
         }
 
-        /// <summary>True if algum collider valid is inside the belly (compat.).</summary>
         public bool IsPlayerInside
         {
             get
@@ -108,7 +80,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        /// <summary>Alias semântico (Player + Molimo).</summary>
         public bool IsTargetInside => IsPlayerInside;
 
         private void Awake()
@@ -145,9 +116,6 @@ namespace MolimoByLulucaGameDev
             _inside.Clear();
         }
 
-        /// <summary>
-        /// Sets exposed.
-        /// </summary>
         public void SetExposed(bool exposed)
         {
             _exposed = exposed;
@@ -162,9 +130,6 @@ namespace MolimoByLulucaGameDev
                 Debug.Log($"[EnemyMotherBelly] belly {(exposed ? "EXPOSTA" : "protegida")}.");
         }
 
-        // ============================================================
-        // Trigger
-        // ============================================================
         private void OnTriggerEnter(Collider other)
         {
             if (!IsValidTarget(other)) return;
@@ -190,10 +155,8 @@ namespace MolimoByLulucaGameDev
                 (targetLayers.value & (1 << other.gameObject.layer)) == 0)
                 return false;
 
-            // Player
             if (other.GetComponentInParent<PlayerBrain>() != null) return true;
 
-            // Molimo (component or tag optional)
             if (acceptMolimo)
             {
                 if (other.GetComponentInParent<MolimoAI>() != null) return true;

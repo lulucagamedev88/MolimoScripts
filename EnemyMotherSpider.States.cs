@@ -3,9 +3,7 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Provides the enemy mother spider component.
-    /// </summary>
+
     public partial class EnemyMotherSpider
     {
         private float _stateTimer;
@@ -42,7 +40,6 @@ namespace MolimoByLulucaGameDev
             _stuckWarned = false;
             _walkImpulseTimer = 0f;
 
-            // chooses the path conforme the position of the player
             if (HasPlayer())
                 RefreshActivePathForTarget(playerTarget.position);
 
@@ -57,7 +54,6 @@ namespace MolimoByLulucaGameDev
             if (!HasPlayer()) { EnterReturnHome(); return; }
             float d = DistanceToPlayer();
 
-            // Player completely outside the alcance → returns to Home (center)
             if (d > disengageRadius) { EnterReturnHome(); return; }
 
             if (d <= attackZoneRadius && _attackCooldownTimer <= 0f)
@@ -67,7 +63,6 @@ namespace MolimoByLulucaGameDev
                 return;
             }
 
-            // Reavalia which path use consoante the lado of the player
             RefreshActivePathForTarget(playerTarget.position);
 
             UpdateChaseDirection();
@@ -223,7 +218,7 @@ namespace MolimoByLulucaGameDev
 
         private void TickReturnHome()
         {
-            // if the Player voltou when the alcance, re-engaja (re-chooses path)
+
             if (HasPlayer() && DistanceToPlayer() <= detectionRadius)
             {
                 EnterChase();
@@ -232,7 +227,7 @@ namespace MolimoByLulucaGameDev
 
             if (constrainToPath && HasUsablePath())
             {
-                // Home = start of the path current (distance 0)
+
                 if (_currentPathDistance <= returnHomeArriveDistance) { ArriveHome(); return; }
                 UpdateReturnHomeDirection();
                 return;
@@ -247,11 +242,11 @@ namespace MolimoByLulucaGameDev
         {
             if (constrainToPath && HasUsablePath())
             {
-                // returns when the start of the path activo (center)
+
                 _chaseDir = Vector3.zero;
                 Vector3 tangent = GetPathTangent(_currentPathDistance);
                 if (tangent.sqrMagnitude > 0.0001f)
-                    _chaseDir = -tangent; // direction opposite when the path = is the start
+                    _chaseDir = -tangent;
                 return;
             }
 

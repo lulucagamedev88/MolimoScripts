@@ -2,10 +2,8 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    [ExecuteAlways] // <- THIS makes the SCRIPT RUN in the VIEWPORT
-    /// <summary>
-    /// Provides the item idle animation component.
-    /// </summary>
+    [ExecuteAlways]
+
     public class ItemIdleAnimation : MonoBehaviour
     {
         [Header("Editor (Viewport)")]
@@ -27,7 +25,7 @@ namespace MolimoByLulucaGameDev
 
         private void Start()
         {
-            // the Start normal of the jogo
+
             if (Application.isPlaying)
             {
                 _startPosition = transform.position;
@@ -41,34 +39,29 @@ namespace MolimoByLulucaGameDev
 
         private void Update()
         {
-            // if NOT is in Play mode and the caixinha of the Editor is desmarcada,
-            // we only atualizamos the position initial is you can mover the object in paz.
+
             if (!Application.isPlaying && !animateInEditor)
             {
                 _startPosition = transform.position;
                 return;
             }
 
-            // in the modo of edicathe (viewport), the Time.time not funciona direito. 
-            // Usamos the realtimeSinceStartup when estamos editando.
             float timeToUse = Application.isPlaying ? Time.time : Time.realtimeSinceStartup;
-            float deltaTime = Application.isPlaying ? Time.deltaTime : 0.016f; // ~60fps simulado in the editor
+            float deltaTime = Application.isPlaying ? Time.deltaTime : 0.016f;
 
-            // rotation continua in the axis Y
             transform.Rotate(
                 Vector3.up,
                 rotationSpeed * deltaTime,
                 Space.World
             );
 
-            // oscillation vertical in onda senoidal
             float newY =
                 _startPosition.y +
                 (Mathf.Sin(timeToUse * floatSpeed) * floatAmplitude);
 
             if (lockPositionXZ)
             {
-                // keeps X and Z exactly in the position initial
+
                 transform.position = new Vector3(
                     _startPosition.x,
                     newY,
@@ -77,7 +70,7 @@ namespace MolimoByLulucaGameDev
             }
             else
             {
-                // keeps X and Z atuais
+
                 transform.position = new Vector3(
                     transform.position.x,
                     newY,

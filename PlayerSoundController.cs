@@ -3,9 +3,7 @@ using UnityEngine;
 namespace MolimoByLulucaGameDev
 {
     [RequireComponent(typeof(AudioSource))]
-    /// <summary>
-    /// Provides the player sound controller component.
-    /// </summary>
+
     public class PlayerSoundController : MonoBehaviour
     {
         [Header("organization of the hierarchy")]
@@ -70,7 +68,7 @@ namespace MolimoByLulucaGameDev
             FindHealthIfNeeded();
             if (health != null)
             {
-                // removes before add is never duplicar the subscription.
+
                 health.OnHealingStarted -= HandleHealingStarted;
                 health.OnHealingStarted += HandleHealingStarted;
             }
@@ -142,11 +140,6 @@ namespace MolimoByLulucaGameDev
                 blockSounds, deathSounds, respawnSounds, healSounds);
         }
 
-        /// <summary>
-        /// Ponto de entrada único para AnimationEvents.
-        /// Chame com o nome da categoria (ex: "Step", "Jump", "KipUp", "Hurt", "Heal", ...).
-        /// A comparação é case-insensitive e ignora espaços.
-        /// </summary>
         public void PlaySoundCategory(string categoryName)
         {
             if (string.IsNullOrEmpty(categoryName)) return;
@@ -157,7 +150,7 @@ namespace MolimoByLulucaGameDev
 
             switch (key)
             {
-                // ---------- locomotion ----------
+
                 case "step": case "stepsounds": HandleStepSound(); break;
                 case "stepgrass":
                 case "stepsoundsgrass":
@@ -167,7 +160,6 @@ namespace MolimoByLulucaGameDev
                 case "roll": case "rollsounds": PlayRandomSoundFromList(rollSounds); break;
                 case "climb": case "climbsounds": PlayRandomSoundFromList(climbSounds); break;
 
-                // ---------- combat ----------
                 case "hurt": case "hurtsounds": PlayRandomSoundFromList(hurtSounds); break;
                 case "kipup": case "kipupsounds": HandleKipUpSound(); break;
                 case "block": case "blocksounds": PlayRandomSoundFromList(blockSounds); break;
@@ -193,7 +185,7 @@ namespace MolimoByLulucaGameDev
 
         private void HandleKipUpSound()
         {
-            // Fallback: if not there is sounds specific of kip up, uses the of damage.
+
             if (kipUpSounds != null && kipUpSounds.Length > 0)
             {
                 if (logPlayedCategories)

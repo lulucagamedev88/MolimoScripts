@@ -4,26 +4,11 @@ using UnityEngine.SceneManagement;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Controla a taxa de atualização de TODOS os Animators do projeto
-    /// (incluindo os instanciados em runtime) para um FPS fixo retrô.
-    ///
-    /// COMO FUNCIONA:
-    ///   1. Procura todos os Animators (ativos, inativos e DontDestroyOnLoad).
-    ///   2. Desativa cada um (impede o Unity de os atualizar automaticamente).
-    ///   3. Chama manualmente Animator.Update(dt) a cada 1/animationFPS segundos.
-    ///
-    /// NOVOS ANIMATORS:
-    ///   - Auto-scan periódico (autoScanInterval).
-    ///   - API pública RegisterAnimator() para registo instantâneo em spawners.
-    ///   - Re-scan automático em cada carregamento de cena.
-    /// </summary>
+
     [DefaultExecutionOrder(-10000)]
     public class GlobalAnimationFPS : MonoBehaviour
     {
-        /// <summary>
-        /// Gets or sets the instance value.
-        /// </summary>
+
         public static GlobalAnimationFPS Instance { get; private set; }
 
         [Header("configuration retro")]
@@ -68,9 +53,6 @@ namespace MolimoByLulucaGameDev
         public bool logManagedCount = false;
         public bool logRegistrations = false;
 
-        // =============================================================
-        // state internal
-        // =============================================================
         private readonly List<Animator> _managedAnimators = new List<Animator>(256);
         private readonly HashSet<Animator> _managedSet = new HashSet<Animator>();
 
@@ -79,9 +61,6 @@ namespace MolimoByLulucaGameDev
         private float _scanTimer;
         private int _enforceFrameCounter;
 
-        // =============================================================
-        // Lifecycle
-        // =============================================================
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -109,7 +88,7 @@ namespace MolimoByLulucaGameDev
 
         private void Start()
         {
-            // Scan extra in the arranque is apanhar Animators criados in the 1º frame.
+
             if (startupExtraScanDelay > 0f)
                 Invoke(nameof(ScanForNewAnimators), startupExtraScanDelay);
             else
@@ -118,13 +97,6 @@ namespace MolimoByLulucaGameDev
 
         private void HandleSceneLoaded(Scene scene, LoadSceneMode mode) => RefreshAll();
 
-        // =============================================================
-        // API Public
-        // =============================================================
-        /// <summary>
-        /// Registo instantâneo — chamar em spawners/pools logo após Instantiate().
-        /// Evita esperar pelo auto-scan periódico.
-        /// </summary>
         public void RegisterAnimator(Animator animator)
         {
             if (animator == null) return;
@@ -137,7 +109,6 @@ namespace MolimoByLulucaGameDev
                 Debug.Log($"[GlobalAnimationFPS] + {animator.name} (total: {_managedAnimators.Count})");
         }
 
-        /// <summary>Remove um Animator e restaura enabled=true.</summary>
         public void UnregisterAnimator(Animator animator)
         {
             if (animator == null) return;
@@ -151,16 +122,12 @@ namespace MolimoByLulucaGameDev
                 Debug.Log($"[GlobalAnimationFPS] - {animator.name} (total: {_managedAnimators.Count})");
         }
 
-        /// <summary>True se o Animator está a ser gerido por este sistema.</summary>
         public bool IsManaged(Animator animator)
         {
             if (animator == null) return false;
             return _managedSet.Contains(animator);
         }
 
-        // =============================================================
-        // Refresh (limpa + procura tudo + aplica)
-        // =============================================================
         public void RefreshAll()
         {
             _managedAnimators.Clear();
@@ -173,10 +140,6 @@ namespace MolimoByLulucaGameDev
                 Debug.Log($"[GlobalAnimationFPS] RefreshAll — a gerir {_managedAnimators.Count} Animators.");
         }
 
-        /// <summary>
-        /// Procura Animators que ainda não estão na lista e adiciona-os.
-        /// Seguro para chamar em runtime.
-        /// </summary>
         private void ScanForNewAnimators()
         {
             Animator[] found;
@@ -218,7 +181,6 @@ namespace MolimoByLulucaGameDev
             return true;
         }
 
-        // ---------- FILTROS ----------
         private bool ShouldIgnore(Animator animator)
         {
             if (animator == null) return true;
@@ -267,7 +229,6 @@ namespace MolimoByLulucaGameDev
             return false;
         }
 
-        // ---------- application ----------
         private void ApplyRetroModeToAll()
         {
             for (int i = 0; i < _managedAnimators.Count; i++)
@@ -294,17 +255,13 @@ namespace MolimoByLulucaGameDev
                     skinned[i].updateWhenOffscreen = true;
             }
 
-            // only disables if the modo retro is enabled.
             if (enableRetroMode)
                 animator.enabled = false;
         }
 
-        // =============================================================
-        // Update
-        // =============================================================
         private void Update()
         {
-            // --- Auto scan (independente of the modo retro) ---
+
             if (autoScanForNewAnimators)
             {
                 _scanTimer += Time.deltaTime;
@@ -315,7 +272,6 @@ namespace MolimoByLulucaGameDev
                 }
             }
 
-            // --- Modo retro disabled: ensures that tudo remains enabled ---
             if (!enableRetroMode)
             {
                 for (int i = 0; i < _managedAnimators.Count; i++)
@@ -326,7 +282,6 @@ namespace MolimoByLulucaGameDev
                 return;
             }
 
-            // --- Enforcement (throttled is reduce overhead) ---
             if (enforceRetroModeOnManagedAnimators)
             {
                 _enforceFrameCounter++;
@@ -341,7 +296,6 @@ namespace MolimoByLulucaGameDev
                 }
             }
 
-            // --- Tick retro ---
             _step = 1f / Mathf.Max(1, animationFPS);
             _timer += Time.deltaTime;
 
@@ -356,12 +310,10 @@ namespace MolimoByLulucaGameDev
 
             float dt = steps * _step;
 
-            // iteration when the opposite is removes with safety.
             for (int i = _managedAnimators.Count - 1; i >= 0; i--)
             {
                 Animator the = _managedAnimators[i];
 
-                // Fake-null check (Unity sobrescreve == is objects destroyed).
                 if (the == null)
                 {
                     _managedAnimators.RemoveAt(i);

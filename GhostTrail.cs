@@ -4,9 +4,7 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Provides the ghost trail component.
-    /// </summary>
+
     public class GhostTrail : MonoBehaviour
     {
         [Header("Ghost Mesh Settings")]
@@ -136,9 +134,6 @@ namespace MolimoByLulucaGameDev
             UpdateActiveGhosts();
         }
 
-        /// <summary>
-        /// Performs the show ghost trail operation.
-        /// </summary>
         public void ShowGhostTrail(float dashDuration)
         {
             StopCurrentTrailRoutine();
@@ -151,9 +146,6 @@ namespace MolimoByLulucaGameDev
             );
         }
 
-        /// <summary>
-        /// Performs the start ghost trail operation.
-        /// </summary>
         public void StartGhostTrail()
         {
             if (continuousTrailActive && !stopRequested)
@@ -169,9 +161,6 @@ namespace MolimoByLulucaGameDev
             );
         }
 
-        /// <summary>
-        /// Performs the stop ghost trail operation.
-        /// </summary>
         public void StopGhostTrail()
         {
             if (!continuousTrailActive)

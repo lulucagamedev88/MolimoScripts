@@ -3,9 +3,7 @@ using UnityEngine;
 namespace MolimoByRodrigoLuluca
 {
     [RequireComponent(typeof(ParticleSystem))]
-    /// <summary>
-    /// Provides the firefly disperse component.
-    /// </summary>
+
     public class FireflyDisperse : MonoBehaviour
     {
         [Header("references")]
@@ -26,8 +24,8 @@ namespace MolimoByRodrigoLuluca
         private ParticleSystem ps;
         private ParticleSystem.Particle[] particles;
         private Vector3[] baseVelocities;
-        private bool[] hasBase;      // correction 3: flags separadas
-        private bool[] isDispersed;  // "captured base" != "the dispersar"
+        private bool[] hasBase;
+        private bool[] isDispersed;
 
         private float naturalLimit;
 
@@ -41,12 +39,9 @@ namespace MolimoByRodrigoLuluca
             hasBase = new bool[max];
             isDispersed = new bool[max];
 
-            // correction 2: World Space → positions/speeds comparable
-            // directly with playerTransform.position
             var main = ps.main;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
 
-            // correction 1: store the limit natural is restore after
             naturalLimit = ps.limitVelocityOverLifetime.limit.constant;
         }
 
@@ -68,8 +63,6 @@ namespace MolimoByRodrigoLuluca
                 {
                     anyInRange = true;
 
-                    // correction 3: capturar the base once, without gate of
-                    // magnitude — picos of noise already not the prevent
                     if (!hasBase[i])
                     {
                         baseVelocities[i] = particles[i].velocity;
@@ -81,7 +74,7 @@ namespace MolimoByRodrigoLuluca
                         playerTransform.position).normalized;
 
                     float t = Mathf.Clamp01(1f - distToPlayer / detectionRadius);
-                    float proximity = t * t * (3f - 2f * t); // smoothstep: more suave
+                    float proximity = t * t * (3f - 2f * t);
 
                     Vector3 targetVelocity = baseVelocities[i] +
                         awayFromPlayer * repulsionStrength * proximity;
@@ -92,7 +85,7 @@ namespace MolimoByRodrigoLuluca
                 }
                 else if (isDispersed[i])
                 {
-                    // regressa to the speed base and after is released
+
                     particles[i].velocity = Vector3.Lerp(
                         particles[i].velocity, baseVelocities[i],
                         returnSpeed * Time.deltaTime);
@@ -100,14 +93,12 @@ namespace MolimoByRodrigoLuluca
                     if (Vector3.Distance(particles[i].velocity,
                         baseVelocities[i]) < 0.01f)
                     {
-                        isDispersed[i] = false; // Particle System retoma controlo
+                        isDispersed[i] = false;
                     }
                 }
-                // if !hasBase: never was alterada, the system natural follows intacto
+
             }
 
-            // correction 1: while someone disperses, the limit of speed
-            // rises; outside the zona, restores the value natural
             var lim = ps.limitVelocityOverLifetime;
             lim.limit = new ParticleSystem.MinMaxCurve(
                 anyInRange ? disperseMaxSpeed : naturalLimit);

@@ -1,8 +1,6 @@
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Defines the contract for idamageable behavior.
-    /// </summary>
+
     public interface IDamageable
     {
         float CurrentHealth { get; }

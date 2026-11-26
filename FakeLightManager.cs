@@ -6,12 +6,10 @@ namespace MolimoByLulucaGameDev
     [ExecuteAlways]
     [DisallowMultipleComponent]
     [AddComponentMenu("Simple Toon/Fake Light Manager")]
-    /// <summary>
-    /// Provides the fake light manager component.
-    /// </summary>
+
     public class FakeLightManager : MonoBehaviour
     {
-        /// <summary>has of be igual when the MAX_FAKE_LIGHTS in STCore.hlsl</summary>
+
         public const int MAX_LIGHTS = 20;
 
         [Header("Materiais target")]
@@ -39,7 +37,6 @@ namespace MolimoByLulucaGameDev
         [Tooltip("Intervalo in seconds for re-escanear the scene à search of luzes.")]
         [Min(0.05f)] public float rescanInterval = 0.5f;
 
-        // ---------------- buffers internos ----------------
         static readonly Vector4[] _pos = new Vector4[MAX_LIGHTS];
         static readonly Vector4[] _col = new Vector4[MAX_LIGHTS];
         static readonly Vector4[] _data = new Vector4[MAX_LIGHTS];
@@ -60,19 +57,16 @@ namespace MolimoByLulucaGameDev
         {
             if (terrainMats == null || terrainMats.Length == 0) return;
 
-            // Re-escaneia the scene the each N seconds (prevents FindObjects all the frames)
             if (Time.unscaledTime >= _nextScan)
             {
                 _nextScan = Time.unscaledTime + rescanInterval;
                 ScanLights();
             }
 
-            // point of reference (câmara by defeito)
             Vector3 refPos = referencePoint != null
                 ? referencePoint.position
                 : (Camera.main != null ? Camera.main.transform.position : Vector3.zero);
 
-            // collects and ordena by distance
             _sorted.Clear();
             for (int i = 0; i < _lights.Count; i++)
             {
@@ -96,20 +90,19 @@ namespace MolimoByLulucaGameDev
                     float inten = l.intensity * intensityMultiplier;
                     float radius = l.range * rangeMultiplier;
 
-                    _pos[i] = new Vector4(p.x, p.y, p.z, 1f);   // w=1 -> slot used
+                    _pos[i] = new Vector4(p.x, p.y, p.z, 1f);
                     _col[i] = new Vector4(c.r * inten, c.g * inten, c.b * inten, 1f);
                     _data[i] = new Vector4(radius, softness, 0f, 0f);
                 }
                 else
                 {
-                    // Slots livres: w=0 -> ignorados by shader
+
                     _pos[i] = new Vector4(0f, 0f, 0f, 0f);
                     _col[i] = Vector4.zero;
                     _data[i] = Vector4.zero;
                 }
             }
 
-            // applies the all the materiais of the list
             for (int m = 0; m < terrainMats.Length; m++)
             {
                 Material mat = terrainMats[m];
@@ -135,7 +128,6 @@ namespace MolimoByLulucaGameDev
             {
                 if (l == null || !l.isActiveAndEnabled || !l.enabled) continue;
 
-                // ✨ checks whether the light is actually acesa (intensidade > 0)
                 if (l.intensity <= 0.01f) continue;
 
                 if (l.type == LightType.Point && includePointLights)
@@ -145,11 +137,10 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // ---------------- utilidades in the Inspector ----------------
         void OnValidate()
         {
             if (rescanInterval < 0.05f) rescanInterval = 0.05f;
-            _nextScan = 0f; // force re-scan no next LateUpdate
+            _nextScan = 0f;
         }
     }
 }

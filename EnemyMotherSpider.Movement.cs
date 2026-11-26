@@ -2,12 +2,10 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Provides the enemy mother spider component.
-    /// </summary>
+
     public partial class EnemyMotherSpider
     {
-        // ---------- State ----------
+
         private Vector3 _chaseDir;
         private Quaternion _snappedRotation;
         private Vector3 _homePosition;
@@ -19,7 +17,6 @@ namespace MolimoByLulucaGameDev
         private bool _stuckWarned;
         private PhysicsMaterial _frictionMaterial;
 
-        // ---------- Path Selection ----------
         private bool _usingSecondaryPath;
 
         private Transform[] GetActivePath()
@@ -39,11 +36,6 @@ namespace MolimoByLulucaGameDev
         private static bool IsPathUsable(Transform[] path)
             => path != null && path.Length >= 2;
 
-        /// <summary>
-        /// Escolhe qual caminho (Primário ou Secundário) usar com base em qual
-        /// está mais próximo do alvo. Inclui histerese (1m) para evitar
-        /// flip-flop quando o alvo está entre os dois caminhos.
-        /// </summary>
         private bool ShouldUseSecondaryPath(Vector3 target)
         {
             bool hasPrimary = IsPathUsable(pathWaypoints);
@@ -55,13 +47,11 @@ namespace MolimoByLulucaGameDev
             float dPrimary = DistanceFromPointToPath(pathWaypoints, target);
             float dSecondary = DistanceFromPointToPath(secondaryPathWaypoints, target);
 
-            // hysteresis — only switch if the difference is relevant.
             if (_usingSecondaryPath)
                 return dSecondary < dPrimary + 1f;
             return dSecondary + 1f < dPrimary;
         }
 
-        /// <summary>Distância perpendicular mínima de um ponto ao path (ignora Y).</summary>
         private float DistanceFromPointToPath(Transform[] path, Vector3 point)
         {
             if (!IsPathUsable(path)) return float.MaxValue;
@@ -88,10 +78,6 @@ namespace MolimoByLulucaGameDev
             return Mathf.Sqrt(bestSq);
         }
 
-        /// <summary>
-        /// Selecciona o path activo com base no alvo e actualiza o estado interno.
-        /// Devolve true se houve troca.
-        /// </summary>
         private bool RefreshActivePathForTarget(Vector3 target)
         {
             bool useSecondary = ShouldUseSecondaryPath(target);
@@ -108,7 +94,6 @@ namespace MolimoByLulucaGameDev
             return true;
         }
 
-        // ---------- Path geometry ----------
         private void RecalculatePathLength()
         {
             _pathLength = 0f;
@@ -258,7 +243,6 @@ namespace MolimoByLulucaGameDev
             if (logPath) Debug.Log($"[EnemyMotherSpider] SnapToPath → {_currentPathDistance:F2}/{_pathLength:F2}.");
         }
 
-        // ---------- Path movement ----------
         private void MoveAlongPath(float speed)
         {
             if (_chaseDir.sqrMagnitude < 0.0001f) { StopHorizontal(); return; }
@@ -299,7 +283,6 @@ namespace MolimoByLulucaGameDev
             rb.linearVelocity = new Vector3(targetFlat.x, v.y, targetFlat.z);
         }
 
-        // ---------- PlayerMovement ----------
         private void ApplyMovementToward(float speed)
         {
             if (constrainToPath && HasUsablePath()) { MoveAlongPath(speed); return; }
@@ -346,7 +329,6 @@ namespace MolimoByLulucaGameDev
                              $"pathDist={_currentPathDistance:F2}/{_pathLength:F2} vel={rb.linearVelocity}");
         }
 
-        // ---------- Physics ----------
         private void ApplyMovementPhysics()
         {
             if (rb != null) rb.linearDamping = 0f;
@@ -371,7 +353,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // ---------- Rotation ----------
         private void UpdateSnappedRotation()
         {
             if (rotationMode == RotationMode.Locked) return;

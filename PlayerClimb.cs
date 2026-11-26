@@ -4,9 +4,7 @@ using UnityEngine.InputSystem;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Provides the player climb component.
-    /// </summary>
+
     public class PlayerClimb : MonoBehaviour
     {
         [Header("References")]
@@ -68,9 +66,9 @@ namespace MolimoByLulucaGameDev
         [SerializeField]
         private Vector3[] allowedClimbFacings = new Vector3[]
         {
-            new Vector3(-1f, 0f, 0f), // < Oeste
-            new Vector3( 0f, 0f, 1f), // ^ Norte
-            new Vector3( 1f, 0f, 0f), // > Leste
+            new Vector3(-1f, 0f, 0f),
+            new Vector3( 0f, 0f, 1f),
+            new Vector3( 1f, 0f, 0f),
         };
 
         [Tooltip("Reforcthe the rotation during all the climbing (not only when the start). " +
@@ -94,11 +92,9 @@ namespace MolimoByLulucaGameDev
         private Rigidbody rb;
         private Vector2 moveInput;
 
-        // Hashes of animation
         private int climbSpeedHash;
         private int isClimbingHash;
 
-        // Buffer static is checagem of physics without alocacathe of GC
         private static readonly Collider[] sensorResults = new Collider[4];
 
         public bool IsTouchingRoof => isTouchingRoof;
@@ -130,7 +126,6 @@ namespace MolimoByLulucaGameDev
             if (playerVFX == null)
                 playerVFX = GetComponent<PlayerVFX>();
 
-            // Hashes of the Animator
             climbSpeedHash = Animator.StringToHash("ClimbSpeed");
             isClimbingHash = Animator.StringToHash("IsClimbing");
 
@@ -166,7 +161,6 @@ namespace MolimoByLulucaGameDev
         {
             if (isTransitioningToRoof) return;
 
-            // entry of interact
             if (interactAction != null && interactAction.action != null)
             {
                 if (interactAction.action.WasPressedThisFrame())
@@ -175,7 +169,6 @@ namespace MolimoByLulucaGameDev
                 }
             }
 
-            // entry of movement (forced in -1, 0 or 1)
             if (moveAction != null && moveAction.action != null)
             {
                 Vector2 rawInput = moveAction.action.ReadValue<Vector2>();
@@ -200,52 +193,39 @@ namespace MolimoByLulucaGameDev
 
             if (isClimbing)
             {
-                // Reforcthe the direction travada during all the climbing
+
                 if (enforceFacingWhileClimbing)
                     EnforceClimbFacing();
 
-                // 1. TRANSI�?�fO of TOPO: Chegou in the limit of the Roof subindo
                 if (isTouchingRoof && moveInput.y > 0)
                 {
                     StartCoroutine(ClimbToRoofRoutine());
                     return;
                 }
 
-                // 2. Perdeu the wall (ex: soltou in the ar)
                 if (!isTouchingClimbable)
                 {
                     StopClimbing();
                     return;
                 }
 
-                // 3. Chegou when the Roof descendo (raro, but consistente)
                 if (isTouchingRoof && moveInput.y < 0)
                 {
                     StopClimbing();
                     return;
                 }
 
-                // applies speed vertical in the wall
                 float verticalVelocity = moveInput.y * climbSpeed;
                 if (rb != null)
                 {
                     rb.linearVelocity = new Vector3(0f, verticalVelocity, 0f);
                 }
 
-                // updates the Blend Tree (-1 = descend, 0 = stopped, 1 = rise)
                 if (animator != null)
                 {
                     animator.SetFloat(climbSpeedHash, moveInput.y);
                 }
 
-                // ============================================================
-                // VFX of climbing
-                // - in movement (subindo or descendo): Play
-                // - stopped in the middle of the climbing: Stop
-                //
-                // SetClimbVFXState and idempotente: calls repetidas with the
-                // same value not of the nothing, entathe and safe chamar the each frame.
-                // ============================================================
                 if (playerVFX != null)
                 {
                     bool isMovingOnWall = Mathf.Abs(moveInput.y) > 0.01f;
@@ -254,9 +234,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        /// <summary>
-        /// Performs the toggle climb operation.
-        /// </summary>
         public void ToggleClimb()
         {
             if (isTransitioningToRoof) return;
@@ -275,8 +252,6 @@ namespace MolimoByLulucaGameDev
         {
             isClimbing = true;
 
-            // locks the rotation before any coisa €” the Player "vira" is the
-            // direction canonica of the wall (< ^ >), independente of the chegou.
             SnapToNearestAllowedFacing();
 
             if (rb != null)
@@ -301,14 +276,11 @@ namespace MolimoByLulucaGameDev
                 brain.SetMovementInputLocked(true);
             }
 
-            // hides the sword of the mathe and shows the of the cintura during the climbing
             if (weaponEquip != null)
             {
                 weaponEquip.SetClimbing(true);
             }
 
-            // VFX of climbing starts disabled €” only vai play when the Player
-            // efetivamente start the rise or descend. the FixedUpdate cuida disso.
             if (playerVFX != null)
             {
                 playerVFX.SetClimbVFXState(false);
@@ -342,13 +314,11 @@ namespace MolimoByLulucaGameDev
                 brain.SetMovementInputLocked(false);
             }
 
-            // restores the state visual normal of the espadas when exiting of the climb
             if (weaponEquip != null)
             {
                 weaponEquip.SetClimbing(false);
             }
 
-            // Desliga the VFX of climbing (Stop)
             if (playerVFX != null)
             {
                 playerVFX.SetClimbVFXState(false);
@@ -357,19 +327,10 @@ namespace MolimoByLulucaGameDev
             Debug.Log("[Climb] Player soltou of the wall.");
         }
 
-        // ============================================================
-        // CLIMB FACING LOCK
-        // ============================================================
-
-        /// <summary>
-        /// Rotaciona o Player para a direÃ§Ã£o permitida mais prÃ³xima da sua forward atual.
-        /// Ã‰ chamado uma vez em StartClimbing.
-        /// </summary>
         private void SnapToNearestAllowedFacing()
         {
             if (!TryGetClimbFacingRotation(out Quaternion target)) return;
 
-            // applies in the Rigidbody (autoridade physics) and in the transform (visual imediato)
             if (rb != null)
             {
                 rb.rotation = target;
@@ -378,15 +339,10 @@ namespace MolimoByLulucaGameDev
             transform.rotation = target;
         }
 
-        /// <summary>
-        /// ReforÃ§o contÃ­nuo durante a escalada â€” barra qualquer tentativa
-        /// externa de girar o Player enquanto ele estÃ¡ na parede.
-        /// </summary>
         private void EnforceClimbFacing()
         {
             if (!TryGetClimbFacingRotation(out Quaternion target)) return;
 
-            // only corrige if the rotation divergir (prevents cost unnecessary)
             Quaternion currentRotation = (rb != null) ? rb.rotation : transform.rotation;
             if (Quaternion.Angle(currentRotation, target) > 0.5f)
             {
@@ -412,10 +368,6 @@ namespace MolimoByLulucaGameDev
             return true;
         }
 
-        /// <summary>
-        /// Retorna qual das direÃ§Ãµes em allowedClimbFacings estÃ¡ mais alinhada
-        /// com a forward atual do Player (usa Dot product no plano XZ).
-        /// </summary>
         private Vector3 GetNearestAllowedFacing()
         {
             Vector3 forward = transform.forward;
@@ -427,7 +379,7 @@ namespace MolimoByLulucaGameDev
             forward.Normalize();
 
             Vector3 best = Vector3.zero;
-            float bestDot = -2f; // smaller that -1
+            float bestDot = -2f;
 
             for (int i = 0; i < allowedClimbFacings.Length; i++)
             {
@@ -448,10 +400,6 @@ namespace MolimoByLulucaGameDev
 
             return best;
         }
-
-        // ============================================================
-        // TRANSITION TO ROOF
-        // ============================================================
 
         private IEnumerator ClimbToRoofRoutine()
         {
@@ -480,25 +428,8 @@ namespace MolimoByLulucaGameDev
             transform.position = targetPosition;
             isTransitioningToRoof = false;
 
-            // exits of the state PlayerClimb (isClimbing = false, animator.SetBool("IsClimbing", false),
-            // VFX of climb is, etc.)
             StopClimbing();
 
-            // ============================================================
-            // �� CORRE�?�fO of the BUG of stuck state
-            //
-            // when the Player chega when the topo, it and teleportado JA GROUNDED in the Roof.
-            // the transicathe PlayerClimb ?' Fall of the Animator exige (IsGrounded == false &&
-            // IsFalling == true), the that never acontece nesse caso.
-            //
-            // CORRE�?�fO PRIMARIA (required): add in the Animator Controller,
-            // inside the sub-state-machine PlayerClimb, the transicathe:
-            //     PlayerClimb ?' Exit    with condicathe  IsGrounded == true
-            // (with Has Exit Time unchecked and duration 0.1).
-            //
-            // this line below and SAFETY BELT�?the: force the crossfade caso
-            // the transicathe of the Animator falhe or is removida without querer.
-            // ============================================================
             if (forceExitOnRoofTransition && animator != null && !string.IsNullOrEmpty(locomotionStateName))
             {
                 animator.CrossFadeInFixedTime(locomotionStateName, climbToLocomotionCrossfade);
@@ -508,13 +439,9 @@ namespace MolimoByLulucaGameDev
             Debug.Log("[Climb] Transicathe is the roof concluiof the!");
         }
 
-        // ============================================================
-        // SENSORS
-        // ============================================================
-
         private void UpdateClimbSensors()
         {
-            // TOPO €” only Roof
+
             bool roofDetected = false;
             if (floorSensor != null && roofLayer.value != 0)
             {
@@ -528,7 +455,6 @@ namespace MolimoByLulucaGameDev
                 roofDetected = hits > 0;
             }
 
-            // wall €” climbable
             bool climbableDetected = false;
             if (wallSensor != null && climbableLayer.value != 0)
             {
@@ -546,16 +472,11 @@ namespace MolimoByLulucaGameDev
             isTouchingClimbable = climbableDetected;
         }
 
-        // ============================================================
-        // GIZMOS
-        // ============================================================
-
         private void OnDrawGizmosSelected()
         {
             if (!lockClimbFacing) return;
             if (allowedClimbFacings == null) return;
 
-            // Desenha each direction allowed the the seta the partir of the player
             Gizmos.color = Color.magenta;
             for (int i = 0; i < allowedClimbFacings.Length; i++)
             {

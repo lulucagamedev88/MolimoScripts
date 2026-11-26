@@ -1,12 +1,9 @@
-
 using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
     [RequireComponent(typeof(Collider))]
-    /// <summary>
-    /// Provides the grass interaction component.
-    /// </summary>
+
     public class GrassInteraction : MonoBehaviour
     {
         [Header("Animation")]

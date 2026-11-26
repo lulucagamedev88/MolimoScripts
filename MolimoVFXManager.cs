@@ -2,9 +2,7 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Provides the molimo vfxmanager component.
-    /// </summary>
+
     public class MolimoVFXManager : MonoBehaviour
     {
         #region Inspector Fields
@@ -33,9 +31,6 @@ namespace MolimoByLulucaGameDev
 
         #region Impact VFX
 
-        /// <summary>
-        /// Performs the spawn impact vfx operation.
-        /// </summary>
         public void SpawnImpactVFX(Vector3 position, Quaternion rotation)
         {
             if (localImpactParticle == null) return;

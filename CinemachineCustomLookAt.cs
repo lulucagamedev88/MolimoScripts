@@ -6,9 +6,7 @@ namespace MolimoByLulucaGameDev
 {
     [ExecuteAlways]
     [AddComponentMenu("Molimo/Cinemachine Custom LookAt")]
-    /// <summary>
-    /// Provides the cinemachine custom look at component.
-    /// </summary>
+
     public class CinemachineCustomLookAt : CinemachineExtension
     {
         [Header("reference of the target")]
@@ -27,21 +25,19 @@ namespace MolimoByLulucaGameDev
         {
             if (stage == CinemachineCore.Stage.Aim)
             {
-                // tries pegar the playerTarget defined in the script. 
-                // if is empty, tries use the vcam.LookAt original the fallback.
+
                 Transform target = playerTarget != null ? playerTarget : vcam.LookAt;
 
                 if (target != null)
                 {
-                    // calculates the position exact where the camera must mirar
+
                     Vector3 targetPosition = target.position + targetOffset;
 
-                    // direction of the position current calculada by Body until the Player
                     Vector3 dirToTarget = targetPosition - state.RawPosition;
 
                     if (dirToTarget != Vector3.zero)
                     {
-                        // force the orientation of the camera is look in the direction of the player
+
                         state.RawOrientation = Quaternion.LookRotation(dirToTarget, Vector3.up);
                     }
                 }

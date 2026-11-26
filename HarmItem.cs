@@ -1,13 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Unity.Cinemachine; // Unity 6 (Cinemachine 3.0+)
+using Unity.Cinemachine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Provides the harm item component.
-    /// </summary>
+
     public class HarmItem : MonoBehaviour
     {
         [Header("Damage Settings")]
@@ -66,9 +64,6 @@ namespace MolimoByLulucaGameDev
             StartCoroutine(FuseRoutine());
         }
 
-        /// <summary>
-        /// Plays fuse sound.
-        /// </summary>
         public void PlayFuseSound()
         {
             if (fuseSoundDataList == null || fuseSoundDataList.Length == 0) return;
@@ -103,7 +98,6 @@ namespace MolimoByLulucaGameDev
 
                 float progress = Mathf.Clamp01(timer / fuseDuration);
 
-                // 1. calculations of pulse and Inchacthe
                 float currentSpeed = Mathf.Lerp(minPulseSpeed, maxPulseSpeed, progress);
                 float currentAmount = Mathf.Lerp(minPulseAmount, maxPulseAmount, progress);
                 float currentBaseSwell = Mathf.Lerp(1f, maxBaseSwell, progress);
@@ -111,7 +105,6 @@ namespace MolimoByLulucaGameDev
                 float pulseWave = Mathf.Sin(timer * currentSpeed) * currentAmount;
                 transform.localScale = originalScale * (currentBaseSwell + pulseWave);
 
-                // 2. calculation and aplicacathe of the rotation gradual in the axis Y
                 float currentRotationSpeed = Mathf.Lerp(minRotationSpeed, maxRotationSpeed, progress);
                 transform.Rotate(Vector3.up, currentRotationSpeed * Time.deltaTime, Space.Self);
 
@@ -144,10 +137,8 @@ namespace MolimoByLulucaGameDev
                 Destroy(vfx, 0.9f);
             }
 
-            // Busca colliders with NonAlloc is prevent alocacathe of lixo in the GC
             int hitCount = Physics.OverlapSphereNonAlloc(transform.position, explosionRadius, hitBuffer, targetLayers);
 
-            // Conjunto is prevent apply damage duplo caso the entity has multiple colliders children
             HashSet<GameObject> processedRoots = new HashSet<GameObject>();
 
             for (int i = 0; i < hitCount; i++)
@@ -160,11 +151,9 @@ namespace MolimoByLulucaGameDev
 
                 bool appliedDamage = false;
 
-                // 1. applies damage and knockback in any entity compatible with IDamageable (BoxEnemy, BushEnemy, etc.)
                 IDamageable damageable = hit.GetComponentInParent<IDamageable>();
                 if (damageable == null) damageable = hit.GetComponent<IDamageable>();
 
-                // Checa CurrentHealth > 0f is not depender estritamente of IsAlive
                 if (damageable != null && damageable.CurrentHealth > 0f)
                 {
                     float enemyDamage = damageable.MaxHealth * damagePercentage;
@@ -172,7 +161,6 @@ namespace MolimoByLulucaGameDev
                     appliedDamage = true;
                 }
 
-                // 2. applies damage in the PLAYER (system baseado in PlayerHealth)
                 PlayerHealth targetHealth = hit.GetComponentInParent<PlayerHealth>();
                 if (targetHealth == null) targetHealth = hit.GetComponent<PlayerHealth>();
 
@@ -183,7 +171,6 @@ namespace MolimoByLulucaGameDev
                     appliedDamage = true;
                 }
 
-                // 3. force the Knockdown in the PLAYER through of the PlayerBrain
                 PlayerBrain targetBrain = hit.GetComponentInParent<PlayerBrain>();
                 if (targetBrain == null) targetBrain = hit.GetComponent<PlayerBrain>();
 

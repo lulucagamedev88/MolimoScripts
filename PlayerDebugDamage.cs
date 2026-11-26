@@ -5,9 +5,7 @@ using UnityEngine.InputSystem;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Provides the player debug damage component.
-    /// </summary>
+
     public class PlayerDebugDamage : MonoBehaviour
     {
         [Header("settings of Teste")]
@@ -61,7 +59,7 @@ namespace MolimoByLulucaGameDev
 
         private void ApplyDamage()
         {
-            // Chama exactly the same method that the enemies chamam
+
             playerHealth.TakeDamage(damageAmount);
 
             if (logActions)
@@ -72,7 +70,6 @@ namespace MolimoByLulucaGameDev
         {
             float hpBefore = playerHealth.CurrentHealth;
 
-            // PlayerHealth.Heal dispara OnHealed, that the PlayerSoundController uses is play HealSounds.
             playerHealth.Heal(healAmount);
 
             float healed = playerHealth.CurrentHealth - hpBefore;

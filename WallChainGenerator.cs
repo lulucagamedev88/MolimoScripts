@@ -6,9 +6,7 @@ namespace MolimoByLulucaGameDev
     [ExecuteAlways]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
-    /// <summary>
-    /// Provides the wall chain generator component.
-    /// </summary>
+
     public class WallChainGenerator : MonoBehaviour
     {
         [Header("settings of the wall")]
@@ -70,7 +68,6 @@ namespace MolimoByLulucaGameDev
         {
             if (meshRenderer == null) return;
 
-            // ---- creation: sets the defaults once ----
             if (solidBlackMaterial == null)
             {
                 Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
@@ -93,27 +90,17 @@ namespace MolimoByLulucaGameDev
                     else if (solidBlackMaterial.HasProperty("_Glossiness"))
                         solidBlackMaterial.SetFloat("_Glossiness", 0f);
 
-                    // Default initial: Cull Back = Render Face "Front" in the URP.
-                    // not play neste value after created, is the utilizador
-                    // can alterar the Render Face in the Inspector without be sobrescrito.
                     if (solidBlackMaterial.HasProperty("_Cull"))
                         solidBlackMaterial.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Back);
                 }
             }
 
-            // ---- reapplication: not mexe in _Cull ----
             if (solidBlackMaterial != null && meshRenderer.sharedMaterial != solidBlackMaterial)
                 meshRenderer.sharedMaterial = solidBlackMaterial;
         }
 
-        /// <summary>
-        /// Performs the mark dirty operation.
-        /// </summary>
         public void MarkDirty() => dirtyFlag = true;
 
-        /// <summary>
-        /// Performs the reset gizmo color operation.
-        /// </summary>
         public void ResetGizmoColor()
         {
             gizmoColor = DefaultGizmoColor;
@@ -142,9 +129,6 @@ namespace MolimoByLulucaGameDev
             GenerateWall();
         }
 
-        /// <summary>
-        /// Performs the add point operation.
-        /// </summary>
         public void AddPoint()
         {
             GameObject pointObj = new GameObject($"Point_{points.Count}");
@@ -164,9 +148,6 @@ namespace MolimoByLulucaGameDev
             RegenerateIfNeeded();
         }
 
-        /// <summary>
-        /// Performs the removes last point operation.
-        /// </summary>
         public void RemoveLastPoint()
         {
             if (points.Count == 0) return;
@@ -188,9 +169,6 @@ namespace MolimoByLulucaGameDev
             RegenerateIfNeeded();
         }
 
-        /// <summary>
-        /// Performs the clear all points operation.
-        /// </summary>
         public void ClearAllPoints()
         {
             foreach (var p in points)
@@ -208,9 +186,6 @@ namespace MolimoByLulucaGameDev
             RegenerateIfNeeded();
         }
 
-        /// <summary>
-        /// Performs the generate wall operation.
-        /// </summary>
         public void GenerateWall()
         {
             EnsureComponents();
@@ -257,18 +232,16 @@ namespace MolimoByLulucaGameDev
 
                 int baseIndex = vertices.Count;
 
-                // ----- Face single (single-sided) -----
-                vertices.Add(posA2);                 // 0
-                vertices.Add(posB2);                 // 1
-                vertices.Add(posA2 + topOffset);     // 2
-                vertices.Add(posB2 + topOffset);     // 3
+                vertices.Add(posA2);
+                vertices.Add(posB2);
+                vertices.Add(posA2 + topOffset);
+                vertices.Add(posB2 + topOffset);
 
                 uvs.Add(new Vector2(0f, 0f));
                 uvs.Add(new Vector2(uLength, 0f));
                 uvs.Add(new Vector2(0f, wallHeight));
                 uvs.Add(new Vector2(uLength, wallHeight));
 
-                // Winding: normal = Cross(up, dir).
                 triangles.Add(baseIndex + 0);
                 triangles.Add(baseIndex + 2);
                 triangles.Add(baseIndex + 1);

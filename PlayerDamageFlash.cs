@@ -5,9 +5,7 @@ using UnityEngine;
 namespace MolimoByLulucaGameDev
 {
     [DisallowMultipleComponent]
-    /// <summary>
-    /// Provides the player damage flash component.
-    /// </summary>
+
     public class PlayerDamageFlash : MonoBehaviour
     {
         [Header("References")]
@@ -32,9 +30,6 @@ namespace MolimoByLulucaGameDev
         [Tooltip("Renderers that never will be afetados by Damage Flash.")]
         [SerializeField] private Renderer[] ignoredRenderers;
 
-        // ------------------------------------------------------------
-        // Dados by material target
-        // ------------------------------------------------------------
         private struct MaterialTarget
         {
             public Renderer renderer;
@@ -50,9 +45,6 @@ namespace MolimoByLulucaGameDev
         private MaterialPropertyBlock propertyBlock;
         private Coroutine flashRoutine;
 
-        // ============================================================
-        // UNITY LIFECYCLE
-        // ============================================================
         private void Awake()
         {
             if (health == null) health = GetComponent<PlayerHealth>();
@@ -81,9 +73,6 @@ namespace MolimoByLulucaGameDev
             ResetAll();
         }
 
-        // ============================================================
-        // COLETA of MATERIAIS
-        // ============================================================
         private void CollectTargets()
         {
             targets.Clear();
@@ -94,7 +83,6 @@ namespace MolimoByLulucaGameDev
                 if (r == null) continue;
                 if (IsRendererIgnored(r)) continue;
 
-                // ignores renderers that not are of the body of the personagem
                 if (r is TrailRenderer || r is LineRenderer || r is ParticleSystemRenderer)
                     continue;
 
@@ -105,8 +93,8 @@ namespace MolimoByLulucaGameDev
                     if (m == null) continue;
 
                     int propID = -1;
-                    if (m.HasProperty(BaseColorID)) propID = BaseColorID;   // URP / HDRP
-                    else if (m.HasProperty(ColorID)) propID = ColorID;      // Built-in
+                    if (m.HasProperty(BaseColorID)) propID = BaseColorID;
+                    else if (m.HasProperty(ColorID)) propID = ColorID;
 
                     if (propID == -1) continue;
 
@@ -126,9 +114,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        /// <summary>
-        /// Verifica se um Renderer está na lista de exclusão.
-        /// </summary>
         private bool IsRendererIgnored(Renderer renderer)
         {
             if (renderer == null || ignoredRenderers == null)
@@ -143,9 +128,6 @@ namespace MolimoByLulucaGameDev
             return false;
         }
 
-        /// <summary>
-        /// Exclui um Renderer em runtime e restaura a sua cor original.
-        /// </summary>
         public void IgnoreRenderer(Renderer renderer)
         {
             if (renderer == null || IsRendererIgnored(renderer))
@@ -164,9 +146,6 @@ namespace MolimoByLulucaGameDev
             targets.RemoveAll(target => target.renderer == renderer);
         }
 
-        /// <summary>
-        /// Volta a permitir que um Renderer receba o Damage Flash.
-        /// </summary>
         public void AllowRenderer(Renderer renderer)
         {
             if (renderer == null || ignoredRenderers == null)
@@ -212,17 +191,11 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // ============================================================
-        // EVENTO of damage
-        // ============================================================
         private void HandleHealthDamaged(float amount)
         {
             TriggerFlash();
         }
 
-        /// <summary>
-        /// Pode ser chamado manualmente tambÃ©m (ex: em outras situaÃ§Ãµes).
-        /// </summary>
         public void TriggerFlash()
         {
             if (!isActiveAndEnabled) return;
@@ -237,19 +210,16 @@ namespace MolimoByLulucaGameDev
             flashRoutine = StartCoroutine(FlashRoutine());
         }
 
-        // ============================================================
-        // ROTINA of FLASH
-        // ============================================================
         private IEnumerator FlashRoutine()
         {
             float pulseTime = flashDuration / (flashCount * 2f);
 
             for (int p = 0; p < flashCount; p++)
             {
-                ApplyFlash(1f);                       // liga
+                ApplyFlash(1f);
                 yield return new WaitForSeconds(pulseTime);
 
-                ApplyFlash(0f);                       // desliga
+                ApplyFlash(0f);
                 yield return new WaitForSeconds(pulseTime);
             }
 

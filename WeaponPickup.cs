@@ -5,14 +5,10 @@ using UnityEngine.InputSystem;
 namespace MolimoByLulucaGameDev
 {
     [RequireComponent(typeof(Rigidbody), typeof(Collider))]
-    /// <summary>
-    /// Provides the weapon pickup component.
-    /// </summary>
+
     public class WeaponPickup : MonoBehaviour
     {
-        /// <summary>
-        /// Defines the available pickup type values.
-        /// </summary>
+
         public enum PickupType { Sword, Shield }
 
         private static readonly List<WeaponPickup> s_activePickups = new List<WeaponPickup>();
@@ -69,20 +65,12 @@ namespace MolimoByLulucaGameDev
         private float _lastRecoveryTime = -100f;
         private Transform _cachedRespawnPoint;
 
-        // --- state of recovery ---
         private float _immunityEndTime = 0f;
         private float _physicsEnableTime = 0f;
         private bool _isWaitingForPhysics = false;
 
-        // --- state of "STRANDED" during TELEPORTE ---
-        // true when this pickup was desativado (tipicamente by area old)
-        // while the TeleportManager estava in transition. the handler of end of
-        // transition uses isto is the recover is the RespawnPoint.
         private bool _wasTransitioningDuringDisable;
 
-        // --- state "in the inventory" ---
-        // true when the Player apanhou this pickup. the objecto remains DESATIVADO
-        // (never destroyed) and is reaproveitado when the Player larga the weapon.
         private bool _isHeld;
 
         public bool IsHeld => _isHeld;
@@ -94,9 +82,6 @@ namespace MolimoByLulucaGameDev
             !string.IsNullOrEmpty(respawnPointTag) ||
             !string.IsNullOrEmpty(respawnPointName);
 
-        /// <summary>
-        /// Performs the notify all of player reset operation.
-        /// </summary>
         public static void NotifyAllOfPlayerReset()
         {
             if (s_activePickups.Count == 0) return;
@@ -113,8 +98,6 @@ namespace MolimoByLulucaGameDev
             rb = GetComponent<Rigidbody>();
             col = GetComponent<Collider>();
 
-            // Subscrever always (same that this GameObject esteja desativado,
-            // the evento static chega in the same when the handler).
             TeleportManager.OnTeleportComplete += HandleTeleportComplete;
         }
 
@@ -134,33 +117,26 @@ namespace MolimoByLulucaGameDev
         {
             s_activePickups.Remove(this);
 
-            // Desativado by ter sido apanhado by Player: not is "stranded".
             if (_isHeld)
             {
                 _wasTransitioningDuringDisable = false;
                 return;
             }
 
-            // if fomos desativados while the TeleportManager is in transition,
-            // is sinal forte of that the area old in the desativou the middle of the
-            // teleporte (ficamos "paralisados in the level previous"). Marcamos is
-            // the handler of end of transition in the recover.
             if (TeleportManager.Instance != null && TeleportManager.Instance.IsTransitioning)
                 _wasTransitioningDuringDisable = true;
 
-            // if estava the middle of the recovery when was desativado,
-            // clears the state is the next OnEnable not remain stuck.
             if (_isWaitingForPhysics)
             {
                 _isWaitingForPhysics = false;
-                // Deixa the Rigidbody num state predictable
+
                 if (rb != null) { rb.isKinematic = true; rb.useGravity = false; }
             }
         }
 
         private void Update()
         {
-            // 0) if is the middle of the recovery, nobody mexe until the timer expirar.
+
             if (_isWaitingForPhysics)
             {
                 if (Time.time >= _physicsEnableTime)
@@ -171,14 +147,12 @@ namespace MolimoByLulucaGameDev
                 return;
             }
 
-            // 1) Fallback of the empty (only corre if the trigger of the abismo not apanhrou)
             if (transform.position.y < voidFallbackY && !IsImmuneToAbyss)
             {
                 RecoverFromAbyss();
                 return;
             }
 
-            // 2) Assentar in the ground
             if (isSettling)
             {
                 settleTimer += Time.deltaTime;
@@ -187,7 +161,6 @@ namespace MolimoByLulucaGameDev
                 return;
             }
 
-            // 3) Input of pickup
             if (!canPickup) return;
 
             bool isGamepadNorthPressed = Gamepad.current != null && Gamepad.current.buttonNorth.wasPressedThisFrame;
@@ -206,20 +179,9 @@ namespace MolimoByLulucaGameDev
 
         #region reaction when the end of the Teleporte (recover if ficou "stranded")
 
-        /// <summary>
-        /// Chamado pelo TeleportManager quando uma transição termina.
-        ///
-        /// Se este pickup estava "em voo" (isSettling), à espera de física
-        /// (_isWaitingForPhysics) ou foi desativado pela área antiga
-        /// (_wasTransitioningDuringDisable), significa que ficou "stranded"
-        /// no nível anterior. Nesse caso:
-        ///   1) Se estiver inativo (filho da área antiga), reparenta para a área
-        ///      do RespawnPoint e reativa — sem isto continuaria invisível.
-        ///   2) Chama RecoverFromAbyss() para o reposicionar e cair de novo.
-        /// </summary>
         private void HandleTeleportComplete(GameObject targetArea)
         {
-            // Pickup guardado in the inventory of the player: never reativar.
+
             if (_isHeld) return;
 
             bool wasStranded =
@@ -231,11 +193,8 @@ namespace MolimoByLulucaGameDev
 
             if (!wasStranded) return;
 
-            // already the recover → RecoverFromAbyss faria early-return; nothing the of the.
             if (_isWaitingForPhysics) return;
 
-            // if estamos inativos (tipicamente because the area old in the desativou),
-            // have of reparentar and reativar, otherwise ficamos invisible in the place errado.
             if (!gameObject.activeInHierarchy)
             {
                 Transform respawnT = GetRespawnPoint();
@@ -245,15 +204,13 @@ namespace MolimoByLulucaGameDev
                 {
                     safeParent = respawnT.parent;
                     if (safeParent != null && !safeParent.gameObject.activeInHierarchy)
-                        safeParent = null; // parent also inativo → use root
+                        safeParent = null;
                 }
 
                 transform.SetParent(safeParent, worldPositionStays: false);
                 gameObject.SetActive(true);
             }
 
-            // repositions in the RespawnPoint (with the fluxo kinematic → teleport →
-            // kinematic off already existing) and agenda the fall is when is active.
             RecoverFromAbyss();
         }
 
@@ -261,24 +218,14 @@ namespace MolimoByLulucaGameDev
 
         #region recovery of the Abismo (Kinematic → Teleport → Kinematic OFF)
 
-        /// <summary>
-        /// Fluxo de recuperação:
-        ///   1) Kinematic ON (congela física, guarda velocidade)
-        ///   2) Teleport para o Respawnpoint (mesmo GameObject, NUNCA recriado)
-        ///   3) Aguarda <see cref="physicsEnableDelay"/> segundos
-        ///   4) Kinematic OFF + gravidade → cai para o chão
-        ///
-        /// Nunca destrói nem instancia. O objeto é sempre o mesmo.
-        /// </summary>
         public void RecoverFromAbyss()
         {
-            // Guard: if already estamos in recovery, not reinicies.
+
             if (_isWaitingForPhysics)
             {
                 return;
             }
 
-            // --- Resolve destino ---
             Transform target = GetRespawnPoint();
             Vector3 targetPos;
             Quaternion targetRot;
@@ -292,7 +239,7 @@ namespace MolimoByLulucaGameDev
             }
             else
             {
-                // Fallback 1: position of the player
+
                 var pr = PlayerReference.Instance;
                 if (pr != null && pr.Root != null)
                 {
@@ -301,18 +248,15 @@ namespace MolimoByLulucaGameDev
                 }
                 else
                 {
-                    // Fallback 2: rises the little above of the voidFallbackY and tries of novo.
-                    // never apagar the GameObject — keeps-in the alive is the trigger/fallback.
+
                     targetPos = transform.position + Vector3.up * 5f;
                     targetRot = transform.rotation;
                 }
             }
 
-            // --- Marca state ---
             _lastRecoveryTime = Time.unscaledTime;
             _immunityEndTime = Time.time + immunityDuration;
 
-            // --- Passo 1: Kinematic ON ---
             if (col != null) col.enabled = false;
 
             if (rb != null)
@@ -323,7 +267,6 @@ namespace MolimoByLulucaGameDev
                 rb.useGravity = false;
             }
 
-            // --- Passo 2: Teleport (transform + rb, is ensure) ---
             transform.SetPositionAndRotation(targetPos, targetRot);
             if (rb != null)
             {
@@ -332,15 +275,12 @@ namespace MolimoByLulucaGameDev
             }
             Physics.SyncTransforms();
 
-            // Religa collider (already in the destino)
             if (col != null) col.enabled = true;
 
-            // --- Passo 3: Agenda Kinematic OFF ---
             _isWaitingForPhysics = true;
             _physicsEnableTime = Time.time + physicsEnableDelay;
         }
 
-        /// <summary>Chamado by Update when the timer of physics expira.</summary>
         private void EnablePhysics()
         {
             isSettling = true;
@@ -390,9 +330,6 @@ namespace MolimoByLulucaGameDev
 
         #region Physics Settle / Pickup
 
-        /// <summary>
-        /// Performs the throw with physics operation.
-        /// </summary>
         public void ThrowWithPhysics(Vector3 force, ForceMode forceMode)
         {
             isSettling = true;
@@ -426,12 +363,9 @@ namespace MolimoByLulucaGameDev
             CheckOverlapPlayer();
         }
 
-        /// <summary>
-        /// Handles player reset events.
-        /// </summary>
         public void OnPlayerReset()
         {
-            if (_isWaitingForPhysics) return;            // already the recover
+            if (_isWaitingForPhysics) return;
             if (_playerBrain != null && !_playerBrain.IsAlive) return;
             if (Time.unscaledTime - _lastRecoveryTime < 0.5f) return;
             if (IsImmuneToAbyss) return;
@@ -472,8 +406,6 @@ namespace MolimoByLulucaGameDev
             PlayerBrain targetBrain = weaponEquip.GetComponentInParent<PlayerBrain>();
             if (targetBrain != null && !targetBrain.IsAlive) return;
 
-            // Regista this objecto in the PlayerWeaponEquipment is be reaproveitado when the largar
-            // (instead of the destroy and the PlayerWeaponEquipment instanciar the clone).
             weaponEquip.RegisterHeldPickup(pickupType, this);
 
             if (pickupType == PickupType.Shield) weaponEquip.EquipShield();
@@ -482,11 +414,6 @@ namespace MolimoByLulucaGameDev
             HoldInInventory();
         }
 
-        /// <summary>
-        /// Guarda o pickup no "inventário": fica desativado e fora de qualquer
-        /// área (raiz da cena), pronto a ser reaproveitado por
-        /// <see cref="ReleaseFromPlayer"/>. NUNCA é destruído.
-        /// </summary>
         private void HoldInInventory()
         {
             _isHeld = true;
@@ -502,19 +429,10 @@ namespace MolimoByLulucaGameDev
             }
             if (col != null) col.isTrigger = true;
 
-            // exits of the area (if is child of the) is not remain stuck numa
-            // hierarchy that possa be desativada when the mudar of level.
             transform.SetParent(null, true);
             gameObject.SetActive(false);
         }
 
-        /// <summary>
-        /// Chamado pelo PlayerWeaponEquipment quando o Player larga a arma/escudo.
-        /// Reativa ESTE mesmo objecto na posição de drop e lança-o com física.
-        /// Se cair no Abismo, o AbyssHazardTrigger chama RecoverFromAbyss()
-        /// e ele é teleportado para o RespawnPoint (Kinematic ON → teleport →
-        /// Kinematic OFF). Nenhum clone é criado.
-        /// </summary>
         public void ReleaseFromPlayer(Vector3 position, Quaternion rotation, Vector3 force, ForceMode forceMode)
         {
             _isHeld = false;

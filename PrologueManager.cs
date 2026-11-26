@@ -4,14 +4,10 @@ using Unity.Cinemachine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Provides the prologue manager component.
-    /// </summary>
+
     public class PrologueManager : MonoBehaviour
     {
-        /// <summary>
-        /// Gets or sets the instance value.
-        /// </summary>
+
         public static PrologueManager Instance { get; private set; }
 
         [Header("Cameras (Cinemachine 3.x)")]
@@ -59,9 +55,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        /// <summary>
-        /// Performs the switch to prologue operation.
-        /// </summary>
         public void SwitchToPrologue()
         {
             if (prologueCamera == null || mainCamera == null) return;
@@ -71,9 +64,6 @@ namespace MolimoByLulucaGameDev
             prologueCompleted = false;
         }
 
-        /// <summary>
-        /// Performs the switch to main operation.
-        /// </summary>
         public void SwitchToMain()
         {
             if (mainCamera == null) return;
@@ -125,9 +115,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        /// <summary>
-        /// Performs the blend to main camera operation.
-        /// </summary>
         public void BlendToMainCamera() => SwitchToMain();
     }
 }

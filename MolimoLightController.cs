@@ -3,9 +3,7 @@ using UnityEngine;
 namespace MolimoByLulucaGameDev
 {
     [DisallowMultipleComponent]
-    /// <summary>
-    /// Provides the molimo light controller component.
-    /// </summary>
+
     public class MolimoLightController : MonoBehaviour
     {
         [Header("references")]
@@ -35,21 +33,17 @@ namespace MolimoByLulucaGameDev
         {
             if (molimoLight == null || dayNightController == null) return;
 
-            // Pega the time current and the state of the DarkZone of the script primary
             float hour = dayNightController.CurrentTimeOfDay;
             bool isInDarkZone = dayNightController.IsInDarkZone;
 
-            // Calcula if the time is in the window of the light (17h at the 7h)
             bool isTimeToBeOn;
-            if (lightsOnHour > lightsOffHour) // Ex: 17 > 7 (atravessa the meia-night)
+            if (lightsOnHour > lightsOffHour)
                 isTimeToBeOn = hour >= lightsOnHour || hour < lightsOffHour;
             else
                 isTimeToBeOn = hour >= lightsOnHour && hour < lightsOffHour;
 
-            // the REGRA FINAL: Liga if is the hour certa or if is in the DarkZone
             bool shouldBeOn = isTimeToBeOn || isInDarkZone;
 
-            // applies only in the checkbox (enabled). without mexer in the intensidade!
             if (molimoLight.enabled != shouldBeOn)
             {
                 molimoLight.enabled = shouldBeOn;

@@ -6,14 +6,10 @@ namespace MolimoByLulucaGameDev
 {
     [DisallowMultipleComponent]
     [AddComponentMenu("Molimo/Enemies/Witch Eye")]
-    /// <summary>
-    /// Provides the witch eye component.
-    /// </summary>
+
     public class WitchEye : MonoBehaviour
     {
-        // ============================================================
-        // 0. MODO of rotation
-        // ============================================================
+
         private enum BodyRotationPlane
         {
             Plane3D_XZ_YawAxis = 0,
@@ -28,25 +24,16 @@ namespace MolimoByLulucaGameDev
         [SerializeField] private bool syncRigidbodyRotation = true;
         [SerializeField] private bool disableAnimatorRootMotion = true;
 
-        // ============================================================
-        // 1. floating
-        // ============================================================
         [Header("=== floating (circle X/Y) ===")]
         [SerializeField] private float floatRadiusX = 0.15f;
         [SerializeField] private float floatRadiusY = 0.20f;
         [SerializeField] private float floatFrequency = 0.5f;
         [Range(0f, 1f)][SerializeField] private float floatPhaseOffset = 0f;
 
-        // ============================================================
-        // 1b. detection
-        // ============================================================
         [Header("=== detection of the player ===")]
         [SerializeField] private float playerDetectionRadius = 6f;
         [SerializeField] private float playerLoseDetectionRadius = 8f;
 
-        // ============================================================
-        // 1c. FOLLOW
-        // ============================================================
         [Header("=== Follow of the player ===")]
         [SerializeField] private bool followPlayer = true;
         [SerializeField] private float followDistance = 4f;
@@ -54,18 +41,12 @@ namespace MolimoByLulucaGameDev
         [SerializeField] private float returnToPatrolSpeed = 2f;
         [SerializeField] private bool lockYToOriginal = true;
 
-        // ============================================================
-        // 1d. rotation RETRO
-        // ============================================================
         [Header("=== rotation of the body (Retro) ===")]
         [SerializeField] private bool rotateBodyToPlayer = true;
         [Range(15f, 90f)][SerializeField] private float bodySnapAngle = 45f;
         [SerializeField] private bool bodySnapInstant = true;
         [SerializeField] private float bodyTurnSpeed = 720f;
 
-        // ============================================================
-        // 3. OLHO
-        // ============================================================
         [Header("=== Olho ===")]
         [SerializeField] private Transform eyeTransform;
         [Range(0f, 180f)][SerializeField] private float eyeMaxYaw = 75f;
@@ -77,9 +58,6 @@ namespace MolimoByLulucaGameDev
         [SerializeField] private bool eyeSnapInstant = true;
         [SerializeField] private float eyeTurnSpeed = 720f;
 
-        // ============================================================
-        // attack of BOLA of energy (throw)
-        // ============================================================
         [Header("=== attack (Bola of energy) ===")]
         [SerializeField] private GameObject energyBallPrefab;
         [SerializeField] private Transform energySpawnPoint;
@@ -92,18 +70,12 @@ namespace MolimoByLulucaGameDev
         [Tooltip("Desliga the gravidade of the bola — does it ir reto until the Player instead of of the arco.")]
         [SerializeField] private bool disableGravityOnEnergyBall = true;
 
-        // ============================================================
-        // VFX CONTAINER
-        // ============================================================
         [Header("=== VFX Container ===")]
         [Tooltip("Transform (folder empty) where all the VFX gerados by WitchEye (bola of energy, pluff, etc.) will be parenteados. " +
                  "leave the the object empty in the root of the scene, with position (0,0,0), rotation (0,0,0) and scale (1,1,1), " +
                  "is not afetar the physics of the bolas of energy.")]
         [SerializeField] private Transform vfxContainer;
 
-        // ============================================================
-        // 2. creatures
-        // ============================================================
         [Header("=== creatures (mission) ===")]
         [SerializeField] private GameObject[] creatures;
         [SerializeField] private bool useHealthComponentFallback = true;
@@ -111,9 +83,6 @@ namespace MolimoByLulucaGameDev
         [Tooltip("uses EnemySpiderAI the fallback is detect death (substitui the old SpiderEnemyAI).")]
         [SerializeField] private bool useSpiderEnemyAIFallback = true;
 
-        // ============================================================
-        // 4. pull
-        // ============================================================
         [Header("=== pull of the player ===")]
         [SerializeField] private float pullSpeed = 12f;
         [SerializeField] private float pullStopDistance = 1.5f;
@@ -122,25 +91,16 @@ namespace MolimoByLulucaGameDev
         [SerializeField] private bool ignoreCreatureCollisionsDuringPull = true;
         [SerializeField] private bool useGhostTrailDuringPull = true;
 
-        // ============================================================
-        // 5. death
-        // ============================================================
         [Header("=== death (Pluff) ===")]
         [SerializeField] private GameObject pluffVfxPrefab;
         [SerializeField] private AudioClip pluffSound;
         [SerializeField] private float pluffDelay = 0.6f;
         [SerializeField] private bool destroyAfterPluff = true;
 
-        // ============================================================
-        // 6. integration
-        // ============================================================
         [Header("=== integration ===")]
         [SerializeField] private bool blockTeleportWhileCreaturesAlive = true;
         [SerializeField] private bool rotatePlayerDuringPull = true;
 
-        // ============================================================
-        // 7. ANIMATOR (TRIGGERS & PARAMS)
-        // ============================================================
         [Header("=== Animator ===")]
         [SerializeField] private Animator animator;
         [SerializeField] private string isFlyingParam = "IsFlying";
@@ -155,15 +115,9 @@ namespace MolimoByLulucaGameDev
         private int hashPrepareAttack;
         private int hashAttack;
 
-        // ============================================================
-        // DEBUG
-        // ============================================================
         [Header("=== Debug ===")]
         [SerializeField] private bool debugLogs = true;
 
-        // ============================================================
-        // state internal
-        // ============================================================
         private Vector3 originalPosition;
         private Vector3 basePosition;
         private float floatTime;
@@ -194,10 +148,6 @@ namespace MolimoByLulucaGameDev
 
         private bool vfxContainerWarned;
 
-        /// <summary>
-        /// Informação de uma criatura (missão) associada à WitchEye.
-        /// FIX: SpiderEnemyAI / EnemySpider → EnemySpiderAI (consolidado).
-        /// </summary>
         private class CreatureInfo
         {
             public GameObject go;
@@ -206,23 +156,17 @@ namespace MolimoByLulucaGameDev
             public System.Action deathHandler;
             public System.Action<float, float> healthHandler;
             public bool defeatReported;
-            public EnemySpiderAI spiderAI;   // era SpiderEnemyAI + EnemySpider
+            public EnemySpiderAI spiderAI;
             public PlayerHealth health;
         }
 
         private CreatureInfo[] creatureInfos;
 
-        // ============================================================
-        // properties public
-        // ============================================================
         public bool IsDead => isDead;
         public bool IsPulling => isPulling;
         public bool IsPlayerDetected => isPlayerDetected;
         public bool AllCreaturesDefeated => AreAllCreaturesDefeated();
 
-        // ============================================================
-        // CICLO of health
-        // ============================================================
         private void Awake()
         {
             originalPosition = transform.position;
@@ -247,7 +191,6 @@ namespace MolimoByLulucaGameDev
             if (animator == null) animator = GetComponentInChildren<Animator>();
             selfAnimator = animator;
 
-            // Hashes of the Animator
             hashIsFlying = Animator.StringToHash(isFlyingParam);
             hashIsPulling = Animator.StringToHash(isPullingParam);
             hashWaitAttack = Animator.StringToHash(waitAttackTrigger);
@@ -353,9 +296,6 @@ namespace MolimoByLulucaGameDev
             UpdateEyeLook();
         }
 
-        // ============================================================
-        // validation and commands of the ANIMATOR
-        // ============================================================
         private void ValidateAnimatorParameter(string paramName, AnimatorControllerParameterType expected)
         {
             if (animator == null || string.IsNullOrEmpty(paramName)) return;
@@ -398,9 +338,6 @@ namespace MolimoByLulucaGameDev
             SetAnimatorBool(hashIsFlying, shouldFly);
         }
 
-        // ============================================================
-        // system of attack (throw)
-        // ============================================================
         private void CheckAttackConditions()
         {
             if (isDead || isPulling || isAttacking || !isPlayerDetected) return;
@@ -421,17 +358,14 @@ namespace MolimoByLulucaGameDev
             isAttacking = true;
             lastAttackTime = Time.time;
 
-            // 1. phase: Gesto of create the bola
             SetAnimatorTrigger(hashWaitAttack);
             Log("attack: WaitAttack");
             yield return new WaitForSeconds(0.4f);
 
-            // 2. phase: leans-if is back (prepares the throw)
             SetAnimatorTrigger(hashPrepareAttack);
             Log("attack: PrepareAttack");
             yield return new WaitForSeconds(0.3f);
 
-            // 3. phase: Dispara the animation of throw (the launch real is disparado by Animation Event)
             SetAnimatorTrigger(hashAttack);
             Log("attack: Attack");
 
@@ -440,9 +374,6 @@ namespace MolimoByLulucaGameDev
             attackRoutine = null;
         }
 
-        /// <summary>
-        /// CHAMADO VIA ANIMATION EVENT no frame exato do arremesso (Attack)
-        /// </summary>
         public void TriggerEnergyAttack()
         {
             if (energyBallPrefab == null)
@@ -457,16 +388,13 @@ namespace MolimoByLulucaGameDev
                 if (playerTransform == null) return;
             }
 
-            // ---- point of spawn ----
             Vector3 baseSpawnPos;
             if (energySpawnPoint != null) baseSpawnPos = energySpawnPoint.position;
             else if (eyeTransform != null) baseSpawnPos = eyeTransform.position;
             else baseSpawnPos = transform.position;
 
-            // ---- target (with offset of height) ----
             Vector3 targetPos = playerTransform.position + playerTargetOffset;
 
-            // ---- direction of the throw ----
             Vector3 toTarget = targetPos - baseSpawnPos;
             if (toTarget.sqrMagnitude < 0.0001f)
             {
@@ -475,16 +403,11 @@ namespace MolimoByLulucaGameDev
             }
             Vector3 throwDirection = toTarget.normalized;
 
-            // Desloca the spawn is forward is not nascer inside the collider of the WitchEye
             Vector3 spawnPos = baseSpawnPos + throwDirection * spawnForwardOffset;
             Quaternion spawnRotation = Quaternion.LookRotation(throwDirection, Vector3.up);
 
-            // ---- Instancia in the container of VFX ----
             GameObject energyBall = InstantiateInVfxContainer(energyBallPrefab, spawnPos, spawnRotation);
 
-            // ============================================================
-            // RIGIDBODY
-            // ============================================================
             Rigidbody ballRb = energyBall.GetComponent<Rigidbody>();
             if (ballRb == null) ballRb = energyBall.GetComponentInChildren<Rigidbody>();
 
@@ -513,11 +436,6 @@ namespace MolimoByLulucaGameDev
             ballRb.interpolation = RigidbodyInterpolation.Interpolate;
             ballRb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 
-            // ============================================================
-            // ⚠ critical — initialize the MAGICBOLT
-            // without isto the OnTriggerEnter / OnCollisionEnter / FixedUpdate of the
-            // MagicBolt retornam cedo → without damage, without VFX, without timer.
-            // ============================================================
             MagicBolt bolt = energyBall.GetComponent<MagicBolt>();
             if (bolt == null) bolt = energyBall.GetComponentInChildren<MagicBolt>();
 
@@ -528,7 +446,7 @@ namespace MolimoByLulucaGameDev
             }
             else
             {
-                // Fallback — nobody will handle the damage. Prefab bad configured.
+
                 ballRb.linearVelocity = Vector3.zero;
                 ballRb.angularVelocity = Vector3.zero;
                 ballRb.linearVelocity = throwDirection * energyBallSpeed;
@@ -543,18 +461,14 @@ namespace MolimoByLulucaGameDev
                 $"temMagicBolt={(bolt != null)}");
         }
 
-        // ============================================================
-        // INSTANCIA VFX in the CONTAINER
-        // ============================================================
         private GameObject InstantiateInVfxContainer(GameObject prefab, Vector3 pos, Quaternion rot)
         {
             GameObject go = Instantiate(prefab, pos, rot);
 
             if (vfxContainer != null)
             {
-                go.transform.SetParent(vfxContainer, true); // worldPositionStays = true
+                go.transform.SetParent(vfxContainer, true);
 
-                // warning the single time if the container not is "limpo"
                 if (!vfxContainerWarned)
                 {
                     bool badScale = (vfxContainer.localScale - Vector3.one).sqrMagnitude > 0.0001f;
@@ -573,18 +487,12 @@ namespace MolimoByLulucaGameDev
             return go;
         }
 
-        // ============================================================
-        // CAPTURA of the rotation initial
-        // ============================================================
         private void CaptureInitialRotation()
         {
             Transform target = visualRoot != null ? visualRoot : transform;
             initialBodyRotation = target.localRotation;
         }
 
-        // ============================================================
-        // detection
-        // ============================================================
         private void UpdateDetection()
         {
             if (!followPlayer)
@@ -625,9 +533,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // ============================================================
-        // FOLLOW / PATRULHA
-        // ============================================================
         private void UpdateFollowBase()
         {
             if (isPulling || isAttacking) return;
@@ -663,9 +568,6 @@ namespace MolimoByLulucaGameDev
                 basePosition, idealBase, followSpeed * Time.deltaTime);
         }
 
-        // ============================================================
-        // floating
-        // ============================================================
         private void UpdateFloat()
         {
             floatTime += Time.deltaTime * floatFrequency * Mathf.PI * 2f;
@@ -676,9 +578,6 @@ namespace MolimoByLulucaGameDev
             transform.position = basePosition + new Vector3(offsetX, offsetY, 0f);
         }
 
-        // ============================================================
-        // rotation of the body
-        // ============================================================
         private void UpdateBodyRotation()
         {
             if (!rotateBodyToPlayer) return;
@@ -767,9 +666,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // ============================================================
-        // OLHO
-        // ============================================================
         private void UpdateEyeLook()
         {
             if (eyeTransform == null) return;
@@ -815,9 +711,6 @@ namespace MolimoByLulucaGameDev
             return Mathf.Round(angle / step) * step;
         }
 
-        // ============================================================
-        // creatures
-        // ============================================================
         private void RefreshCreatureCache()
         {
             UnsubscribeCreatureEvents();
@@ -844,7 +737,6 @@ namespace MolimoByLulucaGameDev
                     info.enemyMotherSpider = c.GetComponent<EnemyMotherSpider>();
                     if (info.enemyMotherSpider == null) info.enemyMotherSpider = c.GetComponentInParent<EnemyMotherSpider>();
 
-                    // FIX: EnemySpiderAI substitui EnemySpider + SpiderEnemyAI.
                     if (useSpiderEnemyAIFallback)
                     {
                         info.spiderAI = c.GetComponent<EnemySpiderAI>();
@@ -873,7 +765,6 @@ namespace MolimoByLulucaGameDev
                 CreatureInfo info = creatureInfos[i];
                 if (info == null) continue;
 
-                // FIX: EnemySpiderAI exposes OnDeath and OnHealthChanged (before era EnemySpider).
                 if (info.spiderAI != null)
                 {
                     info.deathHandler = () => OnCreatureDied(info);
@@ -963,7 +854,6 @@ namespace MolimoByLulucaGameDev
 
             if (info.damageable != null && !info.damageable.IsAlive) return true;
 
-            // FIX: EnemySpiderAI.IsAlive substitui SpiderEnemyAI.IsAlive.
             if (info.spiderAI != null) return !info.spiderAI.IsAlive;
 
             if (useHealthComponentFallback && info.health != null)
@@ -981,9 +871,6 @@ namespace MolimoByLulucaGameDev
             DiePluff();
         }
 
-        // ============================================================
-        // death
-        // ============================================================
         private void DiePluff()
         {
             if (isDead) return;
@@ -1030,9 +917,6 @@ namespace MolimoByLulucaGameDev
             else gameObject.SetActive(false);
         }
 
-        // ============================================================
-        // TELEPORT
-        // ============================================================
         private void SubscribeValidator()
         {
             if (!blockTeleportWhileCreaturesAlive) return;
@@ -1062,9 +946,6 @@ namespace MolimoByLulucaGameDev
             return false;
         }
 
-        // ============================================================
-        // pull
-        // ============================================================
         private IEnumerator PullPlayerRoutine()
         {
             CachePlayer();
@@ -1208,9 +1089,6 @@ namespace MolimoByLulucaGameDev
             playerBrain.SetMovementInputLocked(false);
         }
 
-        // ============================================================
-        // CACHE PLAYER
-        // ============================================================
         private void CachePlayer()
         {
             if (playerBrain != null && playerRigidbody != null && playerTransform != null) return;
@@ -1244,9 +1122,6 @@ namespace MolimoByLulucaGameDev
             if (debugLogs) Debug.Log($"[WitchEye:{name}] {msg}", this);
         }
 
-        // ============================================================
-        // GIZMOS
-        // ============================================================
 #if UNITY_EDITOR
         private void OnDrawGizmosSelected()
         {
@@ -1291,7 +1166,6 @@ namespace MolimoByLulucaGameDev
                 }
             }
 
-            // Gizmo of the Alcance of attack
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(transform.position, attackRange);
 
@@ -1316,7 +1190,6 @@ namespace MolimoByLulucaGameDev
                 Gizmos.DrawRay(eyeTransform.position, eyeTransform.forward * 1.5f);
             }
 
-            // Gizmo of the container of VFX
             if (vfxContainer != null)
             {
                 Gizmos.color = new Color(0.2f, 0.9f, 1f, 0.3f);

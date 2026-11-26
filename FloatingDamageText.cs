@@ -1,36 +1,9 @@
-// =====================================================================================
-// FloatingDamageText.cs
-// -------------------------------------------------------------------------------------
-// GUIA of configuration (not is required create Prefab, tudo is gerado via code):
-//
-// 1) this script not precisa be adicionado manualmente the none object in the scene.
-//    it is anexado dinamicamente by own method static Create().
-//
-// 2) single PASSO required in the EDITOR:
-//    Va in "Edit > Project Settings > TextMesh Pro > Settings" (or crie the asset
-//    TMP_Settings in Assets/TextMesh Pro/Resources caso still not exista, via
-//    "Window > TextMeshPro > Import TMP Essential Resources") and confirme that the campo
-//    "Default Font Asset" is filled (ex: LiberationSans SDF).
-//    without this, TMP_Settings.defaultFontAsset is null and the text remains invisible.
-//
-// 3) the use in any script (Enemy, BreakableBox, etc.):
-//        FloatingDamageText.Create(impactPoint, -damageAmount);
-//    values negativos aparecem the damage (ex: "-25"), values positivos aparecem
-//    with sinal of "+" (ex: "+15", useful is healing).
-//
-// 4) parameters opcionais (fontSize, moveSpeed, duration) can be ajustados by
-//    call, without precisar mexer neste arquivo:
-//        FloatingDamageText.Create(impactPoint, -damageAmount, fontSize: 8f, moveSpeed: 3f, duration: 1.5f);
-// =====================================================================================
-
 using UnityEngine;
 using TMPro;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Provides the floating damage text component.
-    /// </summary>
+
     public class FloatingDamageText : MonoBehaviour
     {
         [Header("settings of movement/duration")]
@@ -49,22 +22,11 @@ namespace MolimoByLulucaGameDev
         private float _elapsedTime = 0f;
 
         #region Static Factory
-        /// <summary>
-        /// creates the text of damage flutuante na position indicada, the pouco acima of the point of impact.
-        /// </summary>
-        /// <param name="worldPosition">point of impact in the world (ex: ClosestPoint of the hit).</param>
-        /// <param name="damageValue">value exibido. Negativo = damage, positivo = healing.</param>
-        /// <param name="fontSize">size of the source of the TextMeshPro.</param>
-        /// <param name="moveSpeed">speed of subida of the text (units/second).</param>
-        /// <param name="duration">time total of health of the text, in seconds.</param>
-        /// <summary>
-        /// Cria um texto de dano flutuante na posição indicada, um pouco acima do ponto de impacto.
-        /// </summary>
+
         public static FloatingDamageText Create(Vector3 worldPosition, float damageValue, float fontSize = 6f, float moveSpeed = 2f, float duration = 1.2f)
         {
             GameObject textObject = new GameObject("FloatingDamageText");
 
-            // Parenta in the container global, if existir in the scene
             if (VFXGlobalContainer.Instance != null)
             {
                 textObject.transform.SetParent(VFXGlobalContainer.Instance, true);
@@ -76,7 +38,7 @@ namespace MolimoByLulucaGameDev
             instance.Initialize(damageValue, fontSize, moveSpeed, duration);
 
             return instance;
-        }        
+        }
         #endregion
 
         #region Initialization
@@ -92,7 +54,7 @@ namespace MolimoByLulucaGameDev
 
         private void ConfigureTextAppearance(float damageValue, float fontSize)
         {
-            // ensures the source default of the TMP is prevent the error of source ausente/text invisible
+
             if (_textMesh.font == null)
             {
                 _textMesh.font = TMP_Settings.defaultFontAsset;
@@ -167,25 +129,3 @@ namespace MolimoByLulucaGameDev
         #endregion
     }
 }
-
-// =====================================================================================
-// example of application (already implementado in the BreakableBox.cs of the projeto):
-//
-//     public void TakeDamage(float damageAmount, Vector3 impactPoint)
-//     {
-//         if (_isBroken) return;
-//
-//         _currentHealth -= damageAmount;
-//
-//         // creates the text of damage flutuante in the point of impact
-//         FloatingDamageText.Create(impactPoint, -damageAmount);
-//
-//         if (_currentHealth <= 0)
-//         {
-//             BreakBox(impactPoint);
-//         }
-//     }
-//
-// the same default serve is the enemy: basta chamar FloatingDamageText.Create(impactPoint, -damageAmount)
-// inside the method that receives damage (ex: EnemyController.TakeDamage), without precisar of none Prefab.
-// =====================================================================================

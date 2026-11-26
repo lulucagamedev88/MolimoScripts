@@ -2,9 +2,7 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Provides the player weapon equipment component.
-    /// </summary>
+
     public class PlayerWeaponEquipment : MonoBehaviour
     {
         #region Inspector Fields
@@ -63,8 +61,6 @@ namespace MolimoByLulucaGameDev
         private bool isShieldEquipped = false;
         private bool isClimbing = false;
 
-        // Pickups originais apanhados by Player (desativados, never destroyed).
-        // are reaproveitados when the largar the weapon/escudo instead of create clones.
         private WeaponPickup heldSwordPickup;
         private WeaponPickup heldShieldPickup;
 
@@ -99,10 +95,6 @@ namespace MolimoByLulucaGameDev
 
         #region Held Pickups API
 
-        /// <summary>
-        /// Chamado pelo WeaponPickup ao ser apanhado. Guarda o objecto original
-        /// para ser reaproveitado quando o Player largar a arma/escudo.
-        /// </summary>
         public void RegisterHeldPickup(WeaponPickup.PickupType type, WeaponPickup pickup)
         {
             if (pickup == null) return;
@@ -115,8 +107,7 @@ namespace MolimoByLulucaGameDev
 
         private static void ReplaceHeldPickup(ref WeaponPickup slot, WeaponPickup incoming)
         {
-            // already tinha other guardado (apanhou the second weapon): the old ficaria
-            // always disabled, so it is destroyed.
+
             if (slot != null && slot != incoming)
                 Destroy(slot.gameObject);
 
@@ -127,9 +118,6 @@ namespace MolimoByLulucaGameDev
 
         #region Sword API
 
-        /// <summary>
-        /// Performs the equip weapon operation.
-        /// </summary>
         public void EquipWeapon()
         {
             isWeaponEquipped = true;
@@ -141,13 +129,9 @@ namespace MolimoByLulucaGameDev
 
             if (brain != null) brain.OnWeaponEquipped();
 
-            // 🎵 sound of equipar sword
             PlayEquipSound(swordEquipSounds);
         }
 
-        /// <summary>
-        /// Performs the unequip weapon operation.
-        /// </summary>
         public void UnequipWeapon()
         {
             isWeaponEquipped = false;
@@ -160,9 +144,6 @@ namespace MolimoByLulucaGameDev
             if (brain != null) brain.OnWeaponUnequipped();
         }
 
-        /// <summary>
-        /// Performs the drop weapon operation.
-        /// </summary>
         public void DropWeapon()
         {
             if (isWeaponEquipped)
@@ -185,39 +166,25 @@ namespace MolimoByLulucaGameDev
 
         #region Shield API
 
-        /// <summary>
-        /// Performs the equip shield operation.
-        /// </summary>
         public void EquipShield()
         {
             isShieldEquipped = true;
             UpdateWeaponVisuals();
 
-            // 🎵 sound of equipar escudo
             PlayEquipSound(shieldEquipSounds);
 
-            // ✅ NOVO: informa the PlayerBrain that the escudo passed the estar available.
-            //    the PlayerBrain encaminha when the PlayerCombat, that libera the state of Block.
             if (brain != null) brain.OnShieldEquipped();
         }
 
-        /// <summary>
-        /// Performs the unequip shield operation.
-        /// </summary>
         public void UnequipShield()
         {
             isShieldEquipped = false;
             UpdateWeaponVisuals();
 
-            // ✅ NOVO: informa the PlayerBrain that the escudo deixou of estar available.
-            //    the PlayerBrain encaminha when the PlayerCombat, that cancela any Block in curso.
             if (brain != null) brain.OnShieldUnequipped();
 
         }
 
-        /// <summary>
-        /// Performs the drop shield operation.
-        /// </summary>
         public void DropShield()
         {
             if (!isShieldEquipped) return;
@@ -236,9 +203,6 @@ namespace MolimoByLulucaGameDev
 
         #region Climbing
 
-        /// <summary>
-        /// Sets climbing.
-        /// </summary>
         public void SetClimbing(bool climbing)
         {
             isClimbing = climbing;
@@ -251,7 +215,7 @@ namespace MolimoByLulucaGameDev
 
         private void UpdateWeaponVisuals()
         {
-            // ---------- SWORD ----------
+
             if (!isWeaponEquipped)
             {
                 if (handSword != null) handSword.SetActive(false);
@@ -268,7 +232,6 @@ namespace MolimoByLulucaGameDev
                 if (hipSword != null) hipSword.SetActive(false);
             }
 
-            // ---------- SHIELD ----------
             if (!isShieldEquipped)
             {
                 if (handShield != null) handShield.SetActive(false);
@@ -300,7 +263,6 @@ namespace MolimoByLulucaGameDev
                                     + (transform.right * Random.Range(-0.5f, 0.5f));
             Vector3 impulse = dropDirection * dropForce;
 
-            // 1) Reaproveita the pickup original (without create clone).
             if (heldPickup != null)
             {
                 WeaponPickup reused = heldPickup;
@@ -311,7 +273,6 @@ namespace MolimoByLulucaGameDev
                 return;
             }
 
-            // 2) Fallback: not there is pickup guardado → instancia the prefab.
             if (prefab == null)
             {
                 return;
@@ -336,10 +297,6 @@ namespace MolimoByLulucaGameDev
 
         #region Sound
 
-        /// <summary>
-        /// Toca um som aleatório da lista num AudioSource temporário,
-        /// para que o clip sobreviva a mudanças de estado/equipamento.
-        /// </summary>
         private void PlayEquipSound(SoundData[] sounds)
         {
             if (sounds == null || sounds.Length == 0)

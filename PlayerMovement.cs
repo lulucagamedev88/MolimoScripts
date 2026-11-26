@@ -5,23 +5,16 @@ using UnityEngine.Serialization;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Provides the player movement component.
-    /// </summary>
+
     public class PlayerMovement : MonoBehaviour
     {
-        // ============================================================
-        // 1. CAMERA & ORIENTATION
-        // ============================================================
+
         [Header("Camera & Orientation")]
         [Tooltip("If checked, movement is relative to Camera view (Isometric). If unchecked, moves directly along World axes (Grid / World).")]
         [SerializeField] private bool useCameraRelativeMovement = true;
         [Tooltip("Camera used to orient movement (if null, automatically searches is Camera.main).")]
         [SerializeField] private Transform cameraTransform;
 
-        // ============================================================
-        // 2. ANIMATION
-        // ============================================================
         [Header("Animation")]
         [SerializeField] private Animator animator;
 
@@ -35,9 +28,6 @@ namespace MolimoByLulucaGameDev
         [SerializeField] private string isRollingParameterName = "IsRolling";
         [SerializeField] private string isExhaustedParameterName = "IsExhausted";
 
-        // ============================================================
-        // 3. MOVEMENT (Locomotion Base)
-        // ============================================================
         [Header("Ground Check")]
         [Tooltip("layers consideradas ground. the CheckSphere uses Ground + Roof combinados.")]
         [SerializeField] private LayerMask groundLayer = ~0;
@@ -66,18 +56,12 @@ namespace MolimoByLulucaGameDev
         [Tooltip("magnitude of the analog stick the partir of the which the Speed of the Animator vai direct is Run (1). between walkThreshold and runThreshold the Speed remains exactly in Walk (0.5).")]
         [SerializeField] private float runThreshold = 0.6f;
 
-        // ============================================================
-        // 4. JUMP
-        // ============================================================
         [Header("Jump Settings")]
         [SerializeField] private float jumpHeight = 4f;
         [SerializeField] private float landingDuration = 0.15f;
         [SerializeField] private float gravityScale = 2.5f;
         [SerializeField] private float fallingGravityMultiplier = 1.2f;
 
-        // ============================================================
-        // 5. ROLL
-        // ============================================================
         [Header("Roll Settings")]
         [SerializeField] private float rollSpeed = 10f;
         [SerializeField] private float rollDuration = 0.3f;
@@ -85,16 +69,10 @@ namespace MolimoByLulucaGameDev
         [Tooltip("window of time in seconds is registar the Roll if pressionado in the ar little before aterrar.")]
         [SerializeField] private float rollInputBufferTime = 0.25f;
 
-        // ============================================================
-        // 6. EXHAUSTED
-        // ============================================================
         [Header("Exhausted Settings")]
         [Tooltip("Multiplicador applied to the speed physics (Walk/Run) while the Player is Exhausted.")]
         [SerializeField] private float exhaustedSpeedMultiplier = 0.5f;
 
-        // ============================================================
-        // 7. KNOCKBACK & BLOCK RECOIL
-        // ============================================================
         [Header("Knockback Settings")]
         [SerializeField] private float knockbackSpeed = 6f;
         [SerializeField] private float knockbackDuration = 0.18f;
@@ -103,27 +81,18 @@ namespace MolimoByLulucaGameDev
         [SerializeField] private float blockRecoilSpeed = 3.5f;
         [SerializeField] private float blockRecoilDuration = 0.12f;
 
-        // ============================================================
-        // 8. ROLL COLLISION IGNORE
-        // ============================================================
         [Header("Roll Collision Ignore")]
         [Tooltip("during the Roll, the Player ignores collision physics with colliders nestas layers " +
                  "(ex.: 'Enemy'). Deixa empty is disable.")]
         [FormerlySerializedAs("rollDashIgnoreLayers")]
         [SerializeField] private LayerMask rollIgnoreLayers;
 
-        // ============================================================
-        // 9. DEBUG
-        // ============================================================
         [Header("Debug")]
         [Tooltip("writes in the Console the motivo by which the Sprint not arranca (only when the motivo changes).")]
         [SerializeField] private bool debugSprint = false;
 
         private string lastSprintDebugReason = null;
 
-        // ============================================================
-        // PRIVATE VARIABLES
-        // ============================================================
         private Rigidbody rb;
         private CapsuleCollider capsuleCollider;
         private PlayerBrain brain;
@@ -173,14 +142,10 @@ namespace MolimoByLulucaGameDev
         private int isRollingParameterHash;
         private int isExhaustedParameterHash;
 
-        // Roll collision exclusion
         private Collider[] playerSolidColliders;
         private LayerMask[] originalExcludeLayersCache;
         private bool rollExclusionApplied = false;
 
-        // ============================================================
-        // PUBLIC PROPERTIES
-        // ============================================================
         public bool IsInitialized => isInitialized;
         public bool IsActive => isActive;
         public bool IsGrounded => isGrounded;
@@ -205,17 +170,11 @@ namespace MolimoByLulucaGameDev
         public bool IsKnockedBack => isKnockedBack;
         public bool IsSuspended => isSuspended;
 
-        // ============================================================
-        // INITIALIZATION
-        // ============================================================
         private void Awake()
         {
             InitializeAnimator();
         }
 
-        /// <summary>
-        /// Performs the initialize operation.
-        /// </summary>
         public void Initialize(PlayerBrain brainReference, Rigidbody rigidbody)
         {
             if (rigidbody == null)
@@ -295,9 +254,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // ============================================================
-        // ROLL COLLISION EXCLUSION
-        // ============================================================
         private void CachePlayerCollidersForExclusion()
         {
             Collider[] all = GetComponentsInChildren<Collider>(true);
@@ -376,12 +332,6 @@ namespace MolimoByLulucaGameDev
             rollExclusionApplied = false;
         }
 
-        // ============================================================
-        // ACTIVE / SUSPEND / LOCK
-        // ============================================================
-        /// <summary>
-        /// Sets active.
-        /// </summary>
         public void SetActive(bool active)
         {
             isActive = active;
@@ -390,7 +340,7 @@ namespace MolimoByLulucaGameDev
             {
                 if (inputActions != null)
                 {
-                    // Sprint remains always enabled while the PlayerMovement is active (ver SetMovementInputLocked).
+
                     inputActions.Player.Sprint.Enable();
 
                     if (!isMovementInputLocked)
@@ -446,19 +396,12 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        /// <summary>
-        /// Sets movement input locked.
-        /// </summary>
         public void SetMovementInputLocked(bool locked)
         {
             isMovementInputLocked = locked;
 
             if (inputActions == null) return;
 
-            // IMPORTANTE: the Sprint not is disabled here. the Action Button desligada and religada
-            // while the key continues premida not returns the disparar 'performed', the that deixava
-            // the Sprint dead after each attack/block until largar and premir of novo.
-            // the lock is applied in UpdateSprintState (isMovementInputLocked).
             if (locked)
             {
                 inputActions.Player.Move.Disable();
@@ -475,9 +418,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        /// <summary>
-        /// Sets suspended.
-        /// </summary>
         public void SetSuspended(bool suspended)
         {
             isSuspended = suspended;
@@ -514,9 +454,6 @@ namespace MolimoByLulucaGameDev
             UpdateAnimator();
         }
 
-        /// <summary>
-        /// Performs the reset motion state for teleport operation.
-        /// </summary>
         public void ResetMotionStateForTeleport()
         {
             moveInput = Vector2.zero;
@@ -545,12 +482,6 @@ namespace MolimoByLulucaGameDev
             ForceRemoveRollCollisionExclusion();
         }
 
-        // ============================================================
-        // UPDATE LOOPS
-        // ============================================================
-        /// <summary>
-        /// Performs the tick movement operation.
-        /// </summary>
         public void TickMovement()
         {
             if (!isInitialized || !isActive || isSuspended) return;
@@ -570,9 +501,6 @@ namespace MolimoByLulucaGameDev
             SyncRollCollisionExclusion();
         }
 
-        /// <summary>
-        /// Performs the tick physics operation.
-        /// </summary>
         public void TickPhysics()
         {
             if (!isInitialized || !isActive || isSuspended) return;
@@ -598,12 +526,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // ============================================================
-        // SPRINT
-        // ============================================================
-        // Sprint premido: evento 'performed' or state real of the Action.
-        // read the state of the Action prevents perder the Sprint if the 'performed' not disparar
-        // (Action religada with the key premida, interaction Hold, etc.).
         private bool IsSprintHeld()
         {
             if (sprintInputPressed) return true;
@@ -613,7 +535,6 @@ namespace MolimoByLulucaGameDev
             return sprint.enabled && sprint.IsPressed();
         }
 
-        // returns null if can of the sprint, or the motivo by which not can.
         private string GetSprintBlockReason()
         {
             if (!IsSprintHeld())
@@ -668,9 +589,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // ============================================================
-        // MOVEMENT & CAMERA ORIENTATION
-        // ============================================================
         private Vector3 GetInputDirection()
         {
             if (moveInput.sqrMagnitude <= 0.01f) return Vector3.zero;
@@ -823,12 +741,6 @@ namespace MolimoByLulucaGameDev
             return new Vector3(Mathf.Sin(radians), 0f, Mathf.Cos(radians)).normalized;
         }
 
-        // ============================================================
-        // JUMP
-        // ============================================================
-        /// <summary>
-        /// Attempts to start jump.
-        /// </summary>
         public void TryStartJump()
         {
             if (isMovementInputLocked || !isGrounded || isJumping || isFalling || isRolling || isKnockedBack) return;
@@ -919,12 +831,6 @@ namespace MolimoByLulucaGameDev
             rb.linearVelocity = velocity;
         }
 
-        // ============================================================
-        // ROLL
-        // ============================================================
-        /// <summary>
-        /// Attempts to start roll.
-        /// </summary>
         public void TryStartRoll()
         {
             if (isMovementInputLocked || isRolling || isKnockedBack || rollCooldownTimer > 0f || !isGrounded) return;
@@ -1011,12 +917,6 @@ namespace MolimoByLulucaGameDev
             rb.linearVelocity = new Vector3(rollDirection.x * rollSpeed, verticalVelocity, rollDirection.z * rollSpeed);
         }
 
-        // ============================================================
-        // EXHAUSTED
-        // ============================================================
-        /// <summary>
-        /// Sets exhausted.
-        /// </summary>
         public void SetExhausted(bool exhausted)
         {
             isExhausted = exhausted;
@@ -1025,12 +925,6 @@ namespace MolimoByLulucaGameDev
                 animator.SetBool(isExhaustedParameterHash, isExhausted);
         }
 
-        // ============================================================
-        // KNOCKBACK & BLOCK RECOIL
-        // ============================================================
-        /// <summary>
-        /// Applies knockback.
-        /// </summary>
         public void ApplyKnockback()
         {
             if (rb == null) return;
@@ -1051,9 +945,6 @@ namespace MolimoByLulucaGameDev
             landingTimer = 0f;
         }
 
-        /// <summary>
-        /// Applies block recoil.
-        /// </summary>
         public void ApplyBlockRecoil(Vector3 attackerPosition)
         {
             if (rb == null) return;
@@ -1105,9 +996,6 @@ namespace MolimoByLulucaGameDev
             rb.linearVelocity = new Vector3(knockbackDirection.x * currentSpeed, verticalVelocity, knockbackDirection.z * currentSpeed);
         }
 
-        // ============================================================
-        // INPUT CALLBACKS
-        // ============================================================
         private void OnMovePerformed(InputAction.CallbackContext context)
         {
             if (!isActive) return;
@@ -1152,9 +1040,6 @@ namespace MolimoByLulucaGameDev
 
         private void OnRollCanceled(InputAction.CallbackContext context) { }
 
-        // ============================================================
-        // CLEANUP
-        // ============================================================
         private void OnDestroy()
         {
             if (ghostTrail != null) ghostTrail.StopGhostTrail();

@@ -2,16 +2,11 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Provides the molimo ai component.
-    /// </summary>
+
     public class MolimoAI : MonoBehaviour
     {
         #region Enums
 
-        /// <summary>
-        /// Defines the available molimo state values.
-        /// </summary>
         public enum MolimoState
         {
             Normal,
@@ -197,11 +192,6 @@ namespace MolimoByLulucaGameDev
 
             UpdateSwordPeriodicSearch();
 
-            // energy / Heal (gerido by MolimoHealer):
-            // 1) rescue critical (Heal empty + PlayerHealth critical + Container with energy):
-            //    enters in HealingPlayer (voa when the chest and divides the energy between PlayerHealth and Heal).
-            // 2) otherwise, abastece the Heal the partir of the Container (silencioso).
-            // the healing manual (key Heal) is done by Player and does not go through here.
             if (_state != MolimoState.HealingPlayer && healer != null)
             {
                 if (healer.CanStartRescue())
@@ -502,9 +492,6 @@ namespace MolimoByLulucaGameDev
             return found;
         }
 
-        /// <summary>
-        /// Determines whether player holding sword.
-        /// </summary>
         public bool IsPlayerHoldingSword()
         {
             if (SwordCheckOverride != null) return SwordCheckOverride();
@@ -830,9 +817,6 @@ namespace MolimoByLulucaGameDev
 
         #region Positioning and Rotation
 
-        /// <summary>
-        /// Returns follow target position.
-        /// </summary>
         public Vector3 GetFollowTargetPosition()
         {
             Vector3 baseTarget = playerTransform.position
@@ -874,9 +858,6 @@ namespace MolimoByLulucaGameDev
 
         #region Public API
 
-        /// <summary>
-        /// Handles player lost sword events.
-        /// </summary>
         public void OnPlayerLostSword()
         {
             _wasHoldingSword = false;
@@ -893,9 +874,6 @@ namespace MolimoByLulucaGameDev
             EnterState(EvaluateLostSwordState());
         }
 
-        /// <summary>
-        /// Handles player picked sword events.
-        /// </summary>
         public void OnPlayerPickedSword()
         {
             _wasHoldingSword = true;
@@ -904,9 +882,6 @@ namespace MolimoByLulucaGameDev
             EnterState(MolimoState.Normal);
         }
 
-        /// <summary>
-        /// Handles sword respawned events.
-        /// </summary>
         public void OnSwordRespawned(Transform newSword)
         {
             UpdateSwordReference(newSword);
@@ -920,9 +895,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        /// <summary>
-        /// Updates sword reference.
-        /// </summary>
         public void UpdateSwordReference(Transform newSword)
         {
             _swordTransform = newSword;
@@ -935,9 +907,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        /// <summary>
-        /// Sets player.
-        /// </summary>
         public void SetPlayer(Transform newPlayer)
         {
             playerTransform = newPlayer;
@@ -955,9 +924,6 @@ namespace MolimoByLulucaGameDev
             if (healer != null) healer.Initialize(playerTransform, healthContainer);
         }
 
-        /// <summary>
-        /// Performs the force reevaluate operation.
-        /// </summary>
         public void ForceReevaluate()
         {
             if (playerTransform == null) return;
@@ -970,9 +936,6 @@ namespace MolimoByLulucaGameDev
                 : EvaluateLostSwordState());
         }
 
-        /// <summary>
-        /// Handles player teleported events.
-        /// </summary>
         public void OnPlayerTeleported()
         {
             _catchUpBoostTimer = teleportCatchUpDuration;

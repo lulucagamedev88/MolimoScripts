@@ -4,48 +4,14 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Gerenciador central de teleporte encadeado entre ÁREAS.
-    ///
-    /// ✦ FACING FORÇADO (+Z do SpawnPoint) — prioridade:
-    ///     1) FacingTarget (se atribuído)
-    ///     2) +Z do SpawnPoint (projetado em XZ)
-    ///     3) mantém rotação
-    ///
-    /// ✦ KEEP ACTIVE (CORRIGIDO):
-    ///   Objetos em 'Keep Active' de um nó são protegidos APENAS durante a
-    ///   transição desse nó. São extraídos da CurrentArea para 'persistentParent'
-    ///   (ou raiz da cena) e passam a ser rastreados. Numa transição seguinte,
-    ///   se a 'Target Area' NÃO estiver dentro da área-fonte de um objeto
-    ///   rastreado, ele é:
-    ///     - restaurado ao parent original (worldPosStays=false + local pos/rot)
-    ///       → fica invisível junto com a área-fonte, e reaparece se voltares lá;
-    ///     - OU desativado, se o parent original já não existir.
-    ///
-    /// ✦ NOTA UNITY — NULL:
-    ///   NUNCA usar '?.', '??', 'is null' ou 'ReferenceEquals' em variáveis do
-    ///   tipo UnityEngine.Object. O Unity usa "fake null" para referências não
-    ///   atribuídas no Inspector, o que faz '?.' lançar
-    ///   UnassignedReferenceException. Usamos sempre '== null' / '!= null'.
-    /// </summary>
+
     [DisallowMultipleComponent]
     [AddComponentMenu("Molimo/Teleport/Teleport Manager")]
     public class TeleportManager : MonoBehaviour
     {
-        // =====================================================================
-        //  Singleton
-        // =====================================================================
-        /// <summary>
-        /// Gets or sets the instance value.
-        /// </summary>
+
         public static TeleportManager Instance { get; private set; }
 
-        /// <summary>
-        /// Disparado no fim de cada transição (depois do Fade OUT e do snap final).
-        /// O argumento é a área de destino que ficou ativa.
-        /// Serve para sistemas externos (ex.: WeaponPickup) reagirem ao fim do
-        /// teleporte sem polling.
-        /// </summary>
         public static event System.Action<GameObject> OnTeleportComplete;
 
         private void Awake()
@@ -66,31 +32,19 @@ namespace MolimoByLulucaGameDev
             if (Instance == this) Instance = null;
         }
 
-        // =====================================================================
-        //  Validator external
-        // =====================================================================
         public System.Func<TeleportNode, bool> TeleportValidator;
 
-        // =====================================================================
-        //  transition visual
-        // =====================================================================
         [Header("=== transition visual ===")]
         [Tooltip("component GridScreenTransition of the Image of the Canvas. " +
                  "if empty, teleporta without fade (not recommended).")]
         [SerializeField] private GridScreenTransition transition;
 
-        // =====================================================================
-        //  physics of the player
-        // =====================================================================
         [Header("=== physics of the player ===")]
         [SerializeField] private bool freezePlayerDuringTransition = true;
         [SerializeField] private bool resetVelocity = true;
         [Range(0, 10)][SerializeField] private int physicsSettleFrames = 2;
         [SerializeField] private float settleAfterTeleport = 0.15f;
 
-        // =====================================================================
-        //  Snap-To-Ground
-        // =====================================================================
         [Header("=== Snap-To-Ground ===")]
         [SerializeField] private bool snapToGround = true;
         [SerializeField] private LayerMask groundLayer;
@@ -100,46 +54,27 @@ namespace MolimoByLulucaGameDev
         [SerializeField] private float sphereCastRadius = 0.3f;
         [SerializeField] private float groundSinkOffset = 0.02f;
 
-        // =====================================================================
-        //  Facing
-        // =====================================================================
         [Header("=== Facing (direction when the appear) ===")]
         [SerializeField] private bool enforceFacing = true;
         [SerializeField] private bool unfreezeRotationToApplyFacing = true;
 
-        // =====================================================================
-        //  persistence (Keep Active)
-        // =====================================================================
         [Header("=== persistence ===")]
         [Tooltip("Parent optional is where the objects in 'Keep Active' are " +
                  "movidos temporariamente. if empty, will is the root of the scene.")]
         [SerializeField] private Transform persistentParent;
 
-        // =====================================================================
-        //  safety
-        // =====================================================================
         [Header("=== safety ===")]
         [SerializeField] private float globalCooldown = 0.5f;
 
-        // =====================================================================
-        //  Debug
-        // =====================================================================
         [Header("=== Debug ===")]
         [SerializeField] private bool debugLogs = true;
         [SerializeField] private bool drawDebugRay = true;
 
-        // =====================================================================
-        //  Runtime
-        // =====================================================================
         private bool _isTransitioning;
         private float _lastTeleportTime = -999f;
 
         public bool IsTransitioning => _isTransitioning;
 
-        /// <summary>
-        /// Registo de um objeto extraído via 'Keep Active'.
-        /// Guarda o necessário para o restaurar mais tarde.
-        /// </summary>
         private class KeptObjectRecord
         {
             public GameObject Obj;
@@ -151,9 +86,6 @@ namespace MolimoByLulucaGameDev
 
         private readonly List<KeptObjectRecord> _keptObjects = new();
 
-        // =====================================================================
-        //  OnValidate
-        // =====================================================================
         private void OnValidate()
         {
             if (snapToGround && groundLayer.value == 0)
@@ -170,12 +102,6 @@ namespace MolimoByLulucaGameDev
             if (sphereCastRadius < 0f) sphereCastRadius = 0f;
         }
 
-        // =====================================================================
-        //  API Public
-        // =====================================================================
-        /// <summary>
-        /// Performs the request teleport operation.
-        /// </summary>
         public bool RequestTeleport(TeleportNode node, Rigidbody playerRb, Collider playerCollider)
         {
             if (node == null || playerRb == null)
@@ -208,7 +134,6 @@ namespace MolimoByLulucaGameDev
                 return false;
             }
 
-            // --- validation externa ---
             if (TeleportValidator != null)
             {
                 bool allowed = true;
@@ -245,22 +170,15 @@ namespace MolimoByLulucaGameDev
             return true;
         }
 
-        // =====================================================================
-        //  CICLO of transition
-        // =====================================================================
         private IEnumerator ExecuteTransitionRoutine(
             TeleportNode node, Rigidbody playerRb, Collider playerCollider)
         {
             _isTransitioning = true;
             bool prevKinematic = playerRb.isKinematic;
 
-            // Unity-safe: '?.' and '??' not can be usados in UnityEngine.Object.
             string currentAreaName = (node.CurrentArea != null) ? node.CurrentArea.name : "(without area)";
             Log($"▶ transition: '{currentAreaName}' → '{node.TargetArea.name}' (via {node.name}).");
 
-            // -----------------------------------------------------------------
-            //  1) Congela physics of the player
-            // -----------------------------------------------------------------
             if (freezePlayerDuringTransition)
             {
                 if (resetVelocity)
@@ -271,49 +189,25 @@ namespace MolimoByLulucaGameDev
                 playerRb.isKinematic = true;
             }
 
-            // -----------------------------------------------------------------
-            //  2) Fade IN
-            // -----------------------------------------------------------------
             if (transition != null)
                 yield return transition.Cover();
             else
                 LogWarn("without GridScreenTransition: pulando Fade IN.");
 
-            // -----------------------------------------------------------------
-            //  3) enables area of destino
-            // -----------------------------------------------------------------
             GameObject targetArea = node.TargetArea;
             if (!targetArea.activeSelf)
                 targetArea.SetActive(true);
 
-            // -----------------------------------------------------------------
-            //  4) Spawn + Snap-To-Ground
-            // -----------------------------------------------------------------
             float footOffset = ComputeFootOffset(playerRb, playerCollider);
             Vector3 spawnPos = ResolveSpawnPosition(node.SpawnPoint.position, footOffset);
 
-            // -----------------------------------------------------------------
-            //  5) Move the Player
-            // -----------------------------------------------------------------
             playerRb.position = spawnPos;
             playerRb.transform.position = spawnPos;
 
-            // -----------------------------------------------------------------
-            //  6) applies Facing
-            // -----------------------------------------------------------------
             ApplyFacing(node, playerRb);
 
-            // -----------------------------------------------------------------
-            //  7) Sincroniza physics
-            // -----------------------------------------------------------------
             Physics.SyncTransforms();
 
-            // -----------------------------------------------------------------
-            //  8) KEEP ACTIVE — correction of the BUG:
-            //     the) Libertar objects cuja area-source not contains the destino.
-            //     b) Extrair the keepActive of the node (of the area current being desativada).
-            //     c) disable the area current.
-            // -----------------------------------------------------------------
             ReleaseKeptObjectsOutside(targetArea);
 
             GameObject area = node.CurrentArea;
@@ -327,9 +221,6 @@ namespace MolimoByLulucaGameDev
                 LogWarn($"'{node.name}': Current area is igual the Target area. area not will be desativada.");
             }
 
-            // -----------------------------------------------------------------
-            //  9) Settle of physics + re-snap + re-facing
-            // -----------------------------------------------------------------
             for (int i = 0; i < physicsSettleFrames; i++)
                 yield return new WaitForFixedUpdate();
 
@@ -340,28 +231,15 @@ namespace MolimoByLulucaGameDev
             if (holdTime > 0f)
                 yield return new WaitForSecondsRealtime(holdTime);
 
-            // -----------------------------------------------------------------
-            // 10) Fade OUT
-            // -----------------------------------------------------------------
             if (transition != null)
                 yield return transition.Reveal();
 
-            // correction final before descongelar
             ForceGroundSnap(playerRb, playerCollider, footOffset);
             ForceFacing(node, playerRb);
 
-            // -----------------------------------------------------------------
-            // 11) Descongela
-            // -----------------------------------------------------------------
             if (freezePlayerDuringTransition)
                 playerRb.isKinematic = prevKinematic;
 
-            // -----------------------------------------------------------------
-            // 12) Notifica subscritores (WeaponPickups, etc.) that the teleporte
-            //     terminou. the try/catch ensures that the exception num subscritor
-            //     not prevents the _isTransitioning of return the false (the that
-            //     bloquearia futuras transitions).
-            // -----------------------------------------------------------------
             if (OnTeleportComplete != null)
             {
                 try
@@ -380,9 +258,6 @@ namespace MolimoByLulucaGameDev
                 $"(Y-rot {playerRb.rotation.eulerAngles.y:F1}°).");
         }
 
-        // =====================================================================
-        //  FACING
-        // =====================================================================
         private void ApplyFacing(TeleportNode node, Rigidbody playerRb)
         {
             if (!enforceFacing || playerRb == null) return;
@@ -442,7 +317,6 @@ namespace MolimoByLulucaGameDev
         {
             rotation = Quaternion.identity;
 
-            // 1) FacingTarget (override)
             Transform target = node.FacingTarget;
             if (target != null)
             {
@@ -455,7 +329,6 @@ namespace MolimoByLulucaGameDev
                 }
             }
 
-            // 2) +Z of the SpawnPoint
             Transform spawn = node.SpawnPoint;
             if (spawn != null)
             {
@@ -470,19 +343,9 @@ namespace MolimoByLulucaGameDev
                 return true;
             }
 
-            // 3) without source: keeps rotation
             return false;
         }
 
-        // =====================================================================
-        //  KEEP ACTIVE — CORRIGIDO + UNITY-SAFE NULL
-        // =====================================================================
-
-        /// <summary>
-        /// Extrai objetos de 'keepActive' da área sendo desativada e REGISTA-OS
-        /// com a área-fonte + parent/local/rot originais. Serão resolvidos
-        /// posteriormente por ReleaseKeptObjectsOutside.
-        /// </summary>
         private void ExtractKeepActive(TeleportNode node, GameObject area)
         {
             GameObject[] keepSet = node.KeepActive;
@@ -490,8 +353,6 @@ namespace MolimoByLulucaGameDev
 
             Transform dest = persistentParent;
 
-            // Unity-safe: '?.name ?? "..."' launches UnassignedReferenceException
-            // when 'dest' is the fake-null (not assigned in the Inspector).
             string destName = (dest != null) ? dest.name : "(root of the scene)";
 
             for (int i = 0; i < keepSet.Length; i++)
@@ -500,8 +361,6 @@ namespace MolimoByLulucaGameDev
                 if (obj == null) continue;
                 if (!obj.transform.IsChildOf(area.transform)) continue;
 
-                // if already is tracked (ex.: re-entered in the area and the object already
-                // tinha sido extracted before), not reparenta of novo.
                 if (_keptObjects.Exists(r => r.Obj == obj))
                     continue;
 
@@ -520,18 +379,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        /// <summary>
-        /// Para cada objeto rastreado como KeepActive, verifica se a sua
-        /// área-fonte ainda contém a área de destino. Se NÃO contém, estamos
-        /// a sair dessa área e o objeto deixa de estar protegido:
-        ///   - parent original ainda existe → restaura lá (worldPosStays=false,
-        ///     com local pos/rot originais). Visibilidade fica dependente do
-        ///     parent original (que fica inativo enquanto estivermos fora).
-        ///   - caso contrário → SetActive(false) para não ficar órfão visível.
-        ///
-        /// O registo é sempre removido, portanto o objeto deixa de ser
-        /// considerado em transições futuras.
-        /// </summary>
         private void ReleaseKeptObjectsOutside(GameObject targetArea)
         {
             if (_keptObjects.Count == 0) return;
@@ -546,7 +393,6 @@ namespace MolimoByLulucaGameDev
                     continue;
                 }
 
-                // still inside the scope of the area-source?
                 bool stillInScope =
                     targetArea != null &&
                     (targetArea.transform == rec.SourceArea.transform ||
@@ -554,16 +400,12 @@ namespace MolimoByLulucaGameDev
 
                 if (stillInScope) continue;
 
-                // Saimos of the area-source → libertar the object.
                 if (rec.OriginalParent != null)
                 {
                     rec.Obj.transform.SetParent(rec.OriginalParent, worldPositionStays: false);
                     rec.Obj.transform.localPosition = rec.OriginalLocalPos;
                     rec.Obj.transform.localRotation = rec.OriginalLocalRot;
-                    // not tocamos in activeSelf: the the parent original pertence
-                    // to the area-source (that remains desativada), the object remains
-                    // automatically invisible. if reentrares in the area-source,
-                    // it returns the appear.
+
                 }
                 else
                 {
@@ -576,9 +418,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // =====================================================================
-        //  Snap-To-Ground
-        // =====================================================================
         private float ComputeFootOffset(Rigidbody playerRb, Collider playerCollider)
         {
             if (playerRb == null || playerCollider == null) return 1f;
@@ -661,9 +500,6 @@ namespace MolimoByLulucaGameDev
             return false;
         }
 
-        // =====================================================================
-        //  Log helpers
-        // =====================================================================
         private void Log(string msg)
         {
             if (debugLogs) Debug.Log($"[TeleportManager] {msg}", this);

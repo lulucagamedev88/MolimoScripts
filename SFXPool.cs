@@ -3,11 +3,7 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Pool de AudioSources pré-criados. Zero alocações em runtime.
-    /// Suporta Preload (clip em RAM), Warmup (aloca vozes para evitar hitch
-    /// no primeiro Play de cada som) e Play com round-robin + steal.
-    /// </summary>
+
     [DisallowMultipleComponent]
     public class SFXPool : MonoBehaviour
     {
@@ -30,12 +26,6 @@ namespace MolimoByLulucaGameDev
 
         private void Awake() => Initialize();
 
-        // ============================================================
-        // Factory — creates in the container if still not existir
-        // ============================================================
-        /// <summary>
-        /// Returns or create.
-        /// </summary>
         public static SFXPool GetOrCreate(Transform container)
         {
             if (container == null) return null;
@@ -45,15 +35,11 @@ namespace MolimoByLulucaGameDev
             return pool;
         }
 
-        /// <summary>
-        /// Performs the initialize operation.
-        /// </summary>
         public void Initialize()
         {
             if (_initialized) return;
             _initialized = true;
 
-            // pre-creates TUDO of once → zero allocation during gameplay
             for (int i = 0; i < poolSize; i++)
                 CreateSource();
         }
@@ -79,26 +65,15 @@ namespace MolimoByLulucaGameDev
             for (int i = 0; i < _sources.Count; i++)
                 if (!_sources[i].isPlaying) return _sources[i];
 
-            // Pool full → rouba the more old
             AudioSource stolen = _sources[_stealIndex];
             _stealIndex = (_stealIndex + 1) % _sources.Count;
             stolen.Stop();
             return stolen;
         }
 
-        // ============================================================
-        // Play
-        // ============================================================
-        /// <summary>
-        /// Performs the play operation.
-        /// </summary>
         public void Play(SoundData data, Vector3 position)
             => Play(data, position, -1f);
 
-        /// <param name="spatialBlendOverride">-1 = uses the value defined in the SoundData.</param>
-        /// <summary>
-        /// Performs the play operation.
-        /// </summary>
         public void Play(SoundData data, Vector3 position, float spatialBlendOverride)
         {
             if (data == null) return;
@@ -118,24 +93,15 @@ namespace MolimoByLulucaGameDev
             src.spatialBlend = spatialBlendOverride >= 0f ? spatialBlendOverride : data.spatialBlend;
             src.minDistance = data.minDistance > 0f ? data.minDistance : 1f;
             src.maxDistance = data.maxDistance > 0f ? data.maxDistance : 50f;
-            src.Play(); // Play() (not PlayOneShot) → smaller latency
+            src.Play();
         }
 
-        // ============================================================
-        // Warmup — aloca voices once is eliminar hitch of the 1.º Play
-        // ============================================================
-        /// <summary>
-        /// Toca cada clip mudo (volume 0) por 1 tick e para, alocando a voz
-        /// interna do AudioSource. Deve ser chamado em Start (depois de Preload).
-        /// Aceita vários arrays numa só chamada: Warmup(a, b, c).
-        /// </summary>
         public void Warmup(params SoundData[][] groups)
         {
             if (groups == null || groups.Length == 0) return;
             Initialize();
             if (_sources.Count == 0) return;
 
-            // uses the last source is minimizar conflito with any Play initial
             AudioSource src = _sources[_sources.Count - 1];
 
             float prevVolume = src.volume;
@@ -168,13 +134,6 @@ namespace MolimoByLulucaGameDev
             src.loop = prevLoop;
         }
 
-        // ============================================================
-        // Preload — carrega clips is RAM
-        // ============================================================
-        /// <summary>Carrega the único array of SoundData for memória.</summary>
-        /// <summary>
-        /// Performs the preload operation.
-        /// </summary>
         public static void Preload(SoundData[] sounds)
         {
             if (sounds == null) return;
@@ -187,10 +146,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        /// <summary>Carrega vários arrays of the only time: Preload(the, b, c).</summary>
-        /// <summary>
-        /// Performs the preload operation.
-        /// </summary>
         public static void Preload(params SoundData[][] groups)
         {
             if (groups == null) return;

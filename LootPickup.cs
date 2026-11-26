@@ -3,9 +3,7 @@ using UnityEngine;
 namespace MolimoByLulucaGameDev
 {
     [RequireComponent(typeof(Collider))]
-    /// <summary>
-    /// Provides the loot pickup component.
-    /// </summary>
+
     public class LootPickup : MonoBehaviour
     {
         [Header("Item Config")]
@@ -17,7 +15,7 @@ namespace MolimoByLulucaGameDev
 
         private void OnTriggerEnter(Collider other)
         {
-            // checks whether who encostou pertence to the layer of the player
+
             if ((playerLayer.value & (1 << other.gameObject.layer)) != 0 || other.CompareTag("Player"))
             {
                 Pickup(other.gameObject);
@@ -34,7 +32,6 @@ namespace MolimoByLulucaGameDev
 
             Debug.Log($"Item coletado: {lootItemData.itemName}");
 
-            // tries add when the inventory of the player (if the component Inventory existir in the Player)
             var playerInventory = player.GetComponent<PlayerInventory>();
             if (playerInventory != null)
             {

@@ -4,9 +4,7 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Provides the molimo health container component.
-    /// </summary>
+
     public class MolimoHealthContainer : MonoBehaviour
     {
         private const float Epsilon = 0.0001f;
@@ -15,14 +13,9 @@ namespace MolimoByLulucaGameDev
 
         public static event Action<int, int> OnMolimoHPChanged;
         public static event Action<EnergyTier> OnEnergyTierRaised;
-        /// <summary>
-        /// Raised when on item collected changes.
-        /// </summary>
+
         public event Action<int> OnItemCollected;
 
-        /// <summary>
-        /// Defines the available energy tier values.
-        /// </summary>
         public enum EnergyTier
         {
             Low = 0,
@@ -30,9 +23,6 @@ namespace MolimoByLulucaGameDev
             Powerful = 2
         }
 
-        /// <summary>
-        /// Performs the raise hpchanged operation.
-        /// </summary>
         public void RaiseHPChanged()
         {
             OnMolimoHPChanged?.Invoke(currentHP, maxHP);
@@ -75,10 +65,6 @@ namespace MolimoByLulucaGameDev
         public bool IsFull => currentHP >= maxHP;
         public float AttractionRadius => attractionRadius;
 
-        /// <summary>
-        /// Energia exata (com fração) usada pelas transferências progressivas e pela barra do HUD.
-        /// CurrentHP é o valor inteiro (arredondado para cima) desta energia.
-        /// </summary>
         public float ExactEnergy => Mathf.Max(0f, currentHP - _spentFraction);
 
         #endregion
@@ -87,13 +73,10 @@ namespace MolimoByLulucaGameDev
 
         private readonly Collider[] _overlapResults = new Collider[20];
 
-        // fraction already spends of the unidade inteira of topo (0 the 1). prevents perder energy by arredondamento.
         private float _spentFraction;
 
-        // Items that the Container already attracted and that still will deposit (reserve of space).
         private readonly List<MolimoCollectableHP> _incoming = new List<MolimoCollectableHP>();
 
-        // true quando o container atingiu o máximo e ainda não voltou a 0.
         private bool _attractionLatched;
 
         #endregion
@@ -107,7 +90,7 @@ namespace MolimoByLulucaGameDev
 
         private void Update()
         {
-            // Liberta o latch quando o container volta a estar vazio.
+
             if (_attractionLatched && currentHP <= 0)
                 _attractionLatched = false;
 
@@ -132,7 +115,6 @@ namespace MolimoByLulucaGameDev
         {
             PruneIncoming();
 
-            // only attracts the that fits: space free less the that already comes the path.
             int room = maxHP - currentHP - IncomingCharge();
             if (room <= 0) return;
 
@@ -184,9 +166,6 @@ namespace MolimoByLulucaGameDev
 
         #region Energy Tier API
 
-        /// <summary>
-        /// Returns current tier.
-        /// </summary>
         public EnergyTier GetCurrentTier()
         {
             if (currentHP >= powerfulEnergyThreshold) return EnergyTier.Powerful;
@@ -210,9 +189,6 @@ namespace MolimoByLulucaGameDev
 
         #region Basket API
 
-        /// <summary>
-        /// Attempts to add hp.
-        /// </summary>
         public bool TryAddHP(int amount)
         {
             if (amount <= 0) return false;
@@ -230,7 +206,6 @@ namespace MolimoByLulucaGameDev
                 OnItemCollected?.Invoke(added);
                 FireTierRaisedIfNeeded(tierBefore);
 
-                // Latch: ao atingir o máximo, para de atrair até voltar a 0.
                 if (latchAttractionUntilEmpty && currentHP >= maxHP)
                     _attractionLatched = true;
             }
@@ -238,9 +213,6 @@ namespace MolimoByLulucaGameDev
             return added > 0;
         }
 
-        /// <summary>
-        /// Attempts to consume hp.
-        /// </summary>
         public bool TryConsumeHP(int amount)
         {
             if (amount <= 0) return false;
@@ -253,10 +225,6 @@ namespace MolimoByLulucaGameDev
             return true;
         }
 
-        /// <summary>
-        /// Consome energia de forma progressiva (valores fracionários, ex: taxa * deltaTime).
-        /// Nunca consome mais do que existe. Devolve a energia REALMENTE consumida.
-        /// </summary>
         public float ConsumeEnergy(float amount)
         {
             if (amount <= 0f || currentHP <= 0) return 0f;

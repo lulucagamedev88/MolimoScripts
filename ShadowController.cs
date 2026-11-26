@@ -3,9 +3,7 @@ using UnityEngine;
 namespace MolimoByLulucaGameDev
 {
     [DisallowMultipleComponent]
-    /// <summary>
-    /// Provides the shadow controller component.
-    /// </summary>
+
     public class ShadowController : MonoBehaviour
     {
         [Header("references")]
@@ -34,7 +32,7 @@ namespace MolimoByLulucaGameDev
 
         private void Awake()
         {
-            // if the targetParent not was arrastado in the Inspector, pega automatically the parent in the hierarchy
+
             if (targetParent == null)
             {
                 targetParent = transform.parent;
@@ -47,7 +45,6 @@ namespace MolimoByLulucaGameDev
                 return;
             }
 
-            // sets the height of the ground where the shadow must remain fixada
             _groundY = useInitialYAsGround ? transform.position.y : fixedGroundY;
         }
 
@@ -55,19 +52,14 @@ namespace MolimoByLulucaGameDev
         {
             if (targetParent == null) return;
 
-            // 1. position: force the shadow the follow the X and Z of the parent, travando the Y in the ground
             transform.position = new Vector3(targetParent.position.x, _groundY, targetParent.position.z);
 
-            // 2. height relative: Calcula how alto the parent is of the ground
             float height = targetParent.position.y - _groundY;
 
-            // normalizes the height between 0 and 1 with base in the height maximum allowed
             float heightRatio = Mathf.Clamp01(height / maxHeight);
 
-            // 3. scale: Quanto more alto the parent, smaller remains the shadow
             float targetScale = Mathf.Lerp(normalScale, minScale, heightRatio);
 
-            // 4. smoothing of the scale
             float currentScale = transform.localScale.x;
             float finalScale = targetScale;
 
@@ -76,7 +68,6 @@ namespace MolimoByLulucaGameDev
                 finalScale = Mathf.Lerp(currentScale, targetScale, Time.deltaTime * scaleSmoothness);
             }
 
-            // applies the scale unificada in X, Y and Z is that all encolham or grow juntos
             transform.localScale = new Vector3(finalScale, finalScale, finalScale);
         }
     }

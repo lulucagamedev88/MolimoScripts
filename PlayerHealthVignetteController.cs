@@ -4,9 +4,7 @@ using UnityEngine.UI;
 namespace MolimoByLulucaGameDev
 {
     [System.Serializable]
-    /// <summary>
-    /// Provides the vignette layer component.
-    /// </summary>
+
     public class VignetteLayer
     {
         [Header("Image")]
@@ -31,9 +29,7 @@ namespace MolimoByLulucaGameDev
     }
 
     [ExecuteAlways]
-    /// <summary>
-    /// Provides the player health vignette controller component.
-    /// </summary>
+
     public class PlayerHealthVignetteController : MonoBehaviour
     {
         [Header("reference of the player")]
@@ -140,7 +136,6 @@ namespace MolimoByLulucaGameDev
             ApplyLayer(veinsLayer, beat, visVeins, forceVeinsMaterial);
             ApplyLayer(plainLayer, beat, visPlain, forcePlainMaterial);
 
-            // 🌟 the sound now uses the visibility of the IMAGEM the GATILHO
             bool isVignetteVisible = showVeins || showPlain;
             DetectAndPlayPulseSound(pulsePhase % 1f, isVignetteVisible);
         }
@@ -181,7 +176,6 @@ namespace MolimoByLulucaGameDev
             smoothedHealthRatio = 0f;
         }
 
-        // 🌟 receives the booleano isVignetteVisible. if the imagem is visible, the sound toca.
         private void DetectAndPlayPulseSound(float currentCycle, bool isVignetteVisible)
         {
             if (!enablePulseSound || !isVignetteVisible)
@@ -207,9 +201,6 @@ namespace MolimoByLulucaGameDev
         private static bool CrossedThreshold(float prev, float curr, float threshold, bool wrapped)
             => wrapped ? (threshold > prev || threshold <= curr) : (prev < threshold && threshold <= curr);
 
-        /// <summary>
-        /// Plays pulse sound.
-        /// </summary>
         public void PlayPulseSound(bool isDub = false)
         {
             SoundData sound = isDub ? dubSound : pulseSound;
@@ -232,7 +223,7 @@ namespace MolimoByLulucaGameDev
             if (!layer.useFadeIn) return 1f;
 
             float t = Mathf.InverseLerp(layer.startHealth, 0f, ratio);
-            // 🌟 Aumentei the opacidade initial of 0.1f is 0.2f (20%) is the imagem appear more claramente logo to the 40%.
+
             return Mathf.SmoothStep(0.2f, 1f, t);
         }
 

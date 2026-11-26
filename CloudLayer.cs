@@ -4,9 +4,7 @@ namespace MolimoByLulucaGameDev
     using UnityEngine;
 
     [DisallowMultipleComponent]
-    /// <summary>
-    /// Provides the cloud layer component.
-    /// </summary>
+
     public class CloudLayer : MonoBehaviour
     {
         [Header("Nuvens (use the button + is add)")]
@@ -58,14 +56,13 @@ namespace MolimoByLulucaGameDev
                 Vector3 p = c.position;
                 p.x += speed * dt;
 
-                // Saiu by right → returns pro start (left)
                 if (speed > 0f && p.x > rightBound)
                 {
                     p.x = leftBound;
                     if (randomizeYOnLoop)
                         p.y = Random.Range(yRange.x, yRange.y);
                 }
-                // (suporte is speed negativa, caso queira invert after)
+
                 else if (speed < 0f && p.x < leftBound)
                 {
                     p.x = rightBound;

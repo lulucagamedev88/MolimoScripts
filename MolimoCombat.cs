@@ -2,9 +2,7 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Provides the molimo combat component.
-    /// </summary>
+
     public class MolimoCombat : MonoBehaviour
     {
         #region Enums
@@ -55,9 +53,6 @@ namespace MolimoByLulucaGameDev
 
         #region Initialization
 
-        /// <summary>
-        /// Performs the initialize operation.
-        /// </summary>
         public void Initialize(Transform player, Vector3 followOffset)
         {
             _playerTransform = player;
@@ -70,35 +65,23 @@ namespace MolimoByLulucaGameDev
 
         #region Public API
 
-        /// <summary>
-        /// Performs the begin combat operation.
-        /// </summary>
         public void BeginCombat()
         {
             _phase = AttackPhase.None;
             _currentTarget = null;
         }
 
-        /// <summary>
-        /// Performs the cancel operation.
-        /// </summary>
         public void Cancel()
         {
             _currentTarget = null;
             _phase = AttackPhase.None;
         }
 
-        /// <summary>
-        /// Determines whether the component has any targets in range.
-        /// </summary>
         public bool HasAnyTargetsInRange()
         {
             return FindNearestEnemyInRange() != null;
         }
 
-        /// <summary>
-        /// Performs the tick operation.
-        /// </summary>
         public bool Tick(Vector3 bobOffset)
         {
             if (_currentTarget != null &&

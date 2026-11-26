@@ -7,15 +7,11 @@ namespace MolimoByLulucaGameDev
         fileName = "NewLootTable",
         menuName = "Molimo/Loot/Loot Table"
     )]
-    /// <summary>
-    /// Provides the loot table component.
-    /// </summary>
+
     public class LootTable : ScriptableObject
     {
         [System.Serializable]
-        /// <summary>
-        /// Provides the loot entry component.
-        /// </summary>
+
         public class LootEntry
         {
             public LootItem item;
@@ -27,9 +23,6 @@ namespace MolimoByLulucaGameDev
         [Header("Loot Items")]
         public List<LootEntry> lootEntries = new List<LootEntry>();
 
-        /// <summary>
-        /// Returns random loot.
-        /// </summary>
         public LootItem GetRandomLoot()
         {
             if (lootEntries == null || lootEntries.Count == 0)

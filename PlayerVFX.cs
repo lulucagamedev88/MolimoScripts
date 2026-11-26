@@ -4,16 +4,7 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Gerenciador central de efeitos visuais (VFX) para entidades do jogo.
-    /// Controla partículas de movimento, bloqueio, cura, carga de energia e gatilhos.
-    ///
-    /// O Charge PS é controlado por ramps de emissão e requer AUTORIZAÇÃO:
-    ///   • SetChargeVFXState(true) só funciona após AuthorizeChargeVFX().
-    ///   • Isto impede que qualquer sistema externo ligue o Charge por acidente.
-    ///
-    /// O PlayerClimb PS é binário: Play enquanto está em PlayerClimb, Stop quando sai.
-    /// </summary>
+
     [DisallowMultipleComponent]
     public class PlayerVFX : MonoBehaviour
     {
@@ -28,9 +19,7 @@ namespace MolimoByLulucaGameDev
 
         #region Dust & PlayerMovement Settings
         [System.Serializable]
-        /// <summary>
-        /// Represents movement dust data data.
-        /// </summary>
+
         public struct MovementDustData
         {
             public ParticleSystem runDustPS;
@@ -165,7 +154,6 @@ namespace MolimoByLulucaGameDev
                 chargePS.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             }
 
-            // ensures that the PS of PlayerClimb starts stopped, same with Play On Awake enabled.
             if (climbPS != null)
                 climbPS.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         }
@@ -212,18 +200,13 @@ namespace MolimoByLulucaGameDev
         #endregion
 
         #region Block VFX Logic
-        /// <summary>
-        /// Plays block impact vfx.
-        /// </summary>
+
         public void PlayBlockImpactVFX()
         {
             if (!vfxEnabled) return;
             PlayParticleSystem(blockImpactPS);
         }
 
-        /// <summary>
-        /// Sets block vfxstate.
-        /// </summary>
         public void SetBlockVFXState(bool isBlocking)
         {
             if (!vfxEnabled)
@@ -245,10 +228,7 @@ namespace MolimoByLulucaGameDev
         #endregion
 
         #region PlayerClimb VFX Logic
-        /// <summary>
-        /// Liga/desliga o VFX de PlayerClimb.
-        /// Chame com `true` ao entrar no estado PlayerClimb e `false` ao sair.
-        /// </summary>
+
         public void SetClimbVFXState(bool isClimbing)
         {
             if (!enableClimbVFX || !vfxEnabled)
@@ -278,10 +258,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        /// <summary>Atalho: for the VFX of escalada imediatamente.</summary>
-        /// <summary>
-        /// Performs the stop climb vfx operation.
-        /// </summary>
         public void StopClimbVFX()
         {
             StopClimbVFXInternal();
@@ -297,21 +273,12 @@ namespace MolimoByLulucaGameDev
         #endregion
 
         #region Charge VFX Logic
-        /// <summary>
-        /// Autoriza o próximo SetChargeVFXState(true).
-        /// Deve ser chamado pelo MolimoHealer no exato momento em que o Molimo
-        /// chega ao peito do Player. A autorização é consumida após o uso.
-        /// </summary>
+
         public void AuthorizeChargeVFX()
         {
             _chargeAuthorized = true;
         }
 
-        /// <summary>
-        /// Liga/desliga o Charge VFX com ramp de emissão suave.
-        /// Ligar:   requer AuthorizeChargeVFX() prévio (se requireAuthorizationForCharge).
-        /// Desligar: sempre permitido.
-        /// </summary>
         public void SetChargeVFXState(bool isCharging)
         {
             if (chargePS == null) return;
@@ -324,7 +291,7 @@ namespace MolimoByLulucaGameDev
 
             if (isCharging)
             {
-                // Bloqueia any attempt not autorizada.
+
                 if (requireAuthorizationForCharge && !_chargeAuthorized)
                 {
                     Debug.LogWarning("[PlayerVFX] attempt of turn on the Charge VFX without authorization. " +
@@ -332,7 +299,6 @@ namespace MolimoByLulucaGameDev
                     return;
                 }
 
-                // consumes the authorization — vale only once.
                 _chargeAuthorized = false;
             }
 
@@ -347,10 +313,6 @@ namespace MolimoByLulucaGameDev
                 : StartCoroutine(ChargeRampOutRoutine());
         }
 
-        /// <summary>Atalho: autoriza + liga imediatamente.</summary>
-        /// <summary>
-        /// Plays charge vfx.
-        /// </summary>
         public void PlayChargeVFX()
         {
             AuthorizeChargeVFX();
@@ -421,29 +383,17 @@ namespace MolimoByLulucaGameDev
         #endregion
 
         #region One-Shot Action VFX (Gatilhos)
-        /// <summary>
-        /// Plays jump vfx.
-        /// </summary>
+
         public void PlayJumpVFX() { if (vfxEnabled) PlayParticleSystem(dustData.jumpDustPS); }
-        /// <summary>
-        /// Plays land vfx.
-        /// </summary>
+
         public void PlayLandVFX() { if (vfxEnabled) PlayParticleSystem(dustData.landDustPS); }
-        /// <summary>
-        /// Plays dash vfx.
-        /// </summary>
+
         public void PlayDashVFX() { if (vfxEnabled) PlayParticleSystem(dashTrailPS); }
-        /// <summary>
-        /// Plays hurt vfx.
-        /// </summary>
+
         public void PlayHurtVFX() { if (vfxEnabled) PlayParticleSystem(hurtImpactPS); }
-        /// <summary>
-        /// Plays heal vfx.
-        /// </summary>
+
         public void PlayHealVFX() { if (vfxEnabled) PlayParticleSystem(healBurstPS); }
-        /// <summary>
-        /// Plays level up vfx.
-        /// </summary>
+
         public void PlayLevelUpVFX() { if (vfxEnabled) PlayParticleSystem(levelUpPS); }
 
         private void PlayParticleSystem(ParticleSystem ps)
@@ -455,9 +405,7 @@ namespace MolimoByLulucaGameDev
         #endregion
 
         #region Utility Methods
-        /// <summary>
-        /// Performs the stop all continuous vfx operation.
-        /// </summary>
+
         public void StopAllContinuousVFX()
         {
             isCurrentlyEmittingDust = false;

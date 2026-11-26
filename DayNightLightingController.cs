@@ -9,18 +9,12 @@ namespace MolimoByLulucaGameDev
     [ExecuteAlways]
     [SelectionBase]
     [DisallowMultipleComponent]
-    /// <summary>
-    /// Provides the day night lighting controller component.
-    /// </summary>
+
     public class DayNightLightingController : MonoBehaviour
     {
-        /// <summary>
-        /// Defines the available kemet period values.
-        /// </summary>
+
         public enum KemetPeriod { Khepri, Ra, Atum, Duat }
-        /// <summary>
-        /// Defines the available kemet clock style values.
-        /// </summary>
+
         public enum KemetClockStyle { SunDeities, TwelveHours, HybridFormat }
 
         #region Inspector
@@ -76,13 +70,10 @@ namespace MolimoByLulucaGameDev
 
         public Light GlobalToonLight => globalToonLight;
         public float CurrentTimeOfDay => currentTimeOfDay;
-        /// <summary>
-        /// Gets or sets the current period value.
-        /// </summary>
+
         public KemetPeriod CurrentPeriod { get; private set; }
         public bool IsInDuat => CurrentPeriod == KemetPeriod.Duat;
 
-        // 🌟 property Public is the MOLIMO LIGHT CONTROLLER read
         public bool IsInDarkZone => _isInDarkZone;
 
         private float _internalMillisecondAccumulator = 0f;
@@ -153,19 +144,12 @@ namespace MolimoByLulucaGameDev
 
         #region API Public
 
-        // called by DARKZONETRIGGER
-        /// <summary>
-        /// Sets dark zone.
-        /// </summary>
         public void SetDarkZone(bool isDark)
         {
             _isInDarkZone = isDark;
-            ApplyCelestialLighting(); // updates the ambient imediatamente
+            ApplyCelestialLighting();
         }
 
-        /// <summary>
-        /// Performs the register global light operation.
-        /// </summary>
         public void RegisterGlobalLight(Light directionalLight)
         {
             if (directionalLight != null && directionalLight.type == LightType.Directional)
@@ -173,27 +157,18 @@ namespace MolimoByLulucaGameDev
             ApplyCelestialLighting();
         }
 
-        /// <summary>
-        /// Sets weather modifiers.
-        /// </summary>
         public void SetWeatherModifiers(Color ambientTint, float ambientStrength)
         {
             _weatherAmbientTint = ambientTint;
             _weatherAmbientStrength = Mathf.Clamp01(ambientStrength);
         }
 
-        /// <summary>
-        /// Sets ambient flash.
-        /// </summary>
         public void SetAmbientFlash(Color flashColor, float flashStrength)
         {
             _ambientFlashColor = flashColor;
             _ambientFlashStrength = Mathf.Clamp01(flashStrength);
         }
 
-        /// <summary>
-        /// Sets time.
-        /// </summary>
         public void SetTime(float hour)
         {
             currentTimeOfDay = Mathf.Clamp(hour, 0f, 24f);
@@ -262,10 +237,9 @@ namespace MolimoByLulucaGameDev
         {
             float normalizedTime = currentTimeOfDay / 24f;
 
-            // 1. light global (SOL)
             if (globalToonLight != null)
             {
-                // if is in the Zona Escura, the light global DESLIGA.
+
                 globalToonLight.enabled = !_isInDarkZone;
 
                 if (!_isInDarkZone)
@@ -280,7 +254,6 @@ namespace MolimoByLulucaGameDev
                 }
             }
 
-            // 2. ambient
             ApplyAmbient(normalizedTime);
         }
 
@@ -290,7 +263,6 @@ namespace MolimoByLulucaGameDev
 
             Color baseAmbient = ambientColorGradient.Evaluate(normalizedTime);
 
-            // if is in the Zona Escura, force the ambient the remain well escuro
             if (_isInDarkZone)
             {
                 baseAmbient = new Color(0.05f, 0.05f, 0.08f, 1f);

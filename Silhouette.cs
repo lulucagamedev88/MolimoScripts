@@ -2,9 +2,7 @@ using UnityEngine;
 
 namespace MolimoByRodrigoLuluca
 {
-    /// <summary>
-    /// Provides the silhouette component.
-    /// </summary>
+
     public class Silhouette : MonoBehaviour
     {
         #region Raycast Settings
@@ -122,25 +120,21 @@ namespace MolimoByRodrigoLuluca
 
             Vector3 origin = raycastOrigin.position;
 
-            // Line the
             lineAEnd = origin +
                        fixedRaycastDirection * lineADistance;
 
-            // Line B
             lineBOrigin = origin +
                           Vector3.up * lineBHeightOffset;
 
             lineBEnd = lineBOrigin +
                        fixedRaycastDirection * lineBDistance;
 
-            // Line C
             lineCOrigin = origin +
                           Vector3.up * lineCHeightOffset;
 
             lineCEnd = lineCOrigin +
                        fixedRaycastDirection * lineCDistance;
 
-            // Detections
             lineADetected = DetectEnvironment(
                 origin,
                 lineAEnd,
@@ -291,7 +285,6 @@ namespace MolimoByRodrigoLuluca
                 0.05f
             );
 
-            // Line the
             Gizmos.color = lineADetected
                 ? new Color(0, 1, 0, 0.3f)
                 : new Color(1, 0, 0, 0.3f);
@@ -315,12 +308,10 @@ namespace MolimoByRodrigoLuluca
             if (lineADetected)
                 Gizmos.DrawSphere(lineAHit.point, 0.06f);
 
-            // Line B - Vertical guide
             Gizmos.color = Color.yellow;
             Gizmos.DrawLine(origin, gizmoBOrigin);
             Gizmos.DrawWireSphere(gizmoBOrigin, 0.04f);
 
-            // Line B
             Gizmos.color = lineBDetected
                 ? new Color(0, 1, 0, 0.3f)
                 : new Color(1, 0, 0, 0.3f);
@@ -344,12 +335,10 @@ namespace MolimoByRodrigoLuluca
             if (lineBDetected)
                 Gizmos.DrawSphere(lineBHit.point, 0.06f);
 
-            // Line C - Vertical guide
             Gizmos.color = Color.yellow;
             Gizmos.DrawLine(origin, gizmoCOrigin);
             Gizmos.DrawWireSphere(gizmoCOrigin, 0.04f);
 
-            // Line C
             Gizmos.color = lineCDetected
                 ? new Color(0, 1, 0, 0.3f)
                 : new Color(1, 0, 0, 0.3f);

@@ -5,16 +5,11 @@ using UnityEngine.Rendering.RenderGraphModule;
 
 namespace MolimoByRodrigoLuluca
 {
-    /// <summary>
-    /// Provides the clear depth feature component.
-    /// </summary>
+
     public class ClearDepthFeature : ScriptableRendererFeature
     {
         private ClearDepthPass clearDepthPass;
 
-        /// <summary>
-        /// Performs the create operation.
-        /// </summary>
         public override void Create()
         {
             clearDepthPass = new ClearDepthPass(
@@ -33,9 +28,6 @@ namespace MolimoByRodrigoLuluca
         }
     }
 
-    /// <summary>
-    /// Provides the clear depth pass component.
-    /// </summary>
     public class ClearDepthPass : ScriptableRenderPass
     {
         public ClearDepthPass(RenderPassEvent passEvent)

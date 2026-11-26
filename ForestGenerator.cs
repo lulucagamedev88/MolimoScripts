@@ -6,18 +6,12 @@ namespace MolimoByLulucaGameDev
     [ExecuteInEditMode]
     [SelectionBase]
     [DisallowMultipleComponent]
-    /// <summary>
-    /// Provides the forest generator component.
-    /// </summary>
+
     public class ForestGenerator : MonoBehaviour
     {
-        /// <summary>
-        /// Defines the available tool mode values.
-        /// </summary>
+
         public enum ToolMode { Point, Paint, Erase }
-        /// <summary>
-        /// Defines the available category type values.
-        /// </summary>
+
         public enum CategoryType { Everything, Trees, Vegetation, Rocks }
 
         [Header("Modo of Ferramenta")]
@@ -54,7 +48,7 @@ namespace MolimoByLulucaGameDev
 
         [Header("randomization visual")]
         [Range(0f, 45f)] public float maxTiltAngle = 10f;
-        [Range(0f, 1f)] public float normalAlignment = 0.5f; // 0 = is up, 1 = Alinha when the solo
+        [Range(0f, 1f)] public float normalAlignment = 0.5f;
         public bool uniformScale = true;
         public Vector3 minScale = new Vector3(0.8f, 0.8f, 0.8f);
         public Vector3 maxScale = new Vector3(1.4f, 1.4f, 1.4f);
@@ -64,16 +58,12 @@ namespace MolimoByLulucaGameDev
         public GameObject[] vegetationPrefabs;
         public GameObject[] rockPrefabs;
 
-        // lists separadas by category
         [HideInInspector] public List<GameObject> spawnedTrees = new List<GameObject>();
         [HideInInspector] public List<GameObject> spawnedVegetation = new List<GameObject>();
         [HideInInspector] public List<GameObject> spawnedRocks = new List<GameObject>();
 
         #region Brush Logic
 
-        /// <summary>
-        /// Performs the paint at operation.
-        /// </summary>
         public void PaintAt(Vector3 centerWorldPos)
         {
             List<GameObject> availablePrefabs = GetAvailablePrefabs();
@@ -118,9 +108,6 @@ namespace MolimoByLulucaGameDev
             return list;
         }
 
-        /// <summary>
-        /// Performs the erase at operation.
-        /// </summary>
         public void EraseAt(Vector3 centerWorldPos)
         {
             CleanNulls();
@@ -156,24 +143,21 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // function modificada is include check of mask
         private bool TrySpawnAtPosition(Vector3 worldPos, List<Vector3> occupied, List<GameObject> availablePrefabs)
         {
-            // 1. check of distance (already existing)
+
             float minSqrDist = minDistanceBetweenTrees * minDistanceBetweenTrees;
             foreach (var occ in occupied)
             {
                 if ((worldPos - occ).sqrMagnitude < minSqrDist) return false;
             }
 
-            // 2. Raycast is find the ground and the UVs
             Vector3 rayStart = worldPos + Vector3.up * raycastStartHeight;
             if (Physics.Raycast(rayStart, Vector3.down, out RaycastHit hit, raycastDistance, groundLayer))
             {
-                // 3. check of mask (NOVO)
+
                 if (!IsSpawnAllowedByMask(hit)) return false;
 
-                // 4. Spawn (if passed in the mask and distance)
                 if (SpawnSingleObjectAt(hit.point, hit.normal, availablePrefabs))
                 {
                     occupied.Add(hit.point);
@@ -186,41 +170,35 @@ namespace MolimoByLulucaGameDev
         #region Masking System Implementation (NOVO)
         private bool IsSpawnAllowedByMask(RaycastHit hit)
         {
-            // if not houver mask configured, the generation is allowed in all lugar
+
             if (generationMask == null) return true;
 
-            // gets the coordenadas UV of the point of impact
             Vector2 uv = hit.textureCoord;
 
-            // applies scale and offset configurados by user
             Vector2 finalUV = new Vector2(
                 (uv.x * maskScale.x) + maskOffset.x,
                 (uv.y * maskScale.y) + maskOffset.y
             );
 
-            // ensures leitura safe inside of 0 the 1
             float sampleX = Mathf.Repeat(finalUV.x, 1f);
             float sampleY = Mathf.Repeat(finalUV.y, 1f);
 
             try
             {
-                // reads the color of the pixel in the texture
-                // IMPORTANTE: the texture must ter "Read/Write Enabled" checked in the import settings
+
                 Color maskColor = generationMask.GetPixelBilinear(sampleX, sampleY);
 
-                // uses the luminance (average RGB) is set if is blank
                 float intensity = (maskColor.r + maskColor.g + maskColor.b) / 3f;
 
-                // if the intensidade is larger or igual when the threshold, allows the spawn
                 return intensity >= maskThreshold;
             }
             catch (System.Exception and)
             {
-                // 'and.Message' with M maiusculo corrige the error of compilation
+
                 Debug.LogError("ForestGenerator: error when the read the mask. Verifique if the texture has 'Read/Write Enabled' checked. " + and.Message);
-                return false; // fails safe
+                return false;
             }
-        }        
+        }
         #endregion
 
         private bool SpawnSingleObjectAt(Vector3 worldPosition, Vector3 surfaceNormal, List<GameObject> availablePrefabs)
@@ -292,9 +270,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        /// <summary>
-        /// Updates forest transforms.
-        /// </summary>
         public void UpdateForestTransforms()
         {
             CleanNulls();
@@ -325,9 +300,6 @@ namespace MolimoByLulucaGameDev
 
         #region Container Helpers
 
-        /// <summary>
-        /// Returns main container.
-        /// </summary>
         public Transform GetMainContainer()
         {
             Transform mainContainer = transform.Find("Generated_Forest");
@@ -343,9 +315,6 @@ namespace MolimoByLulucaGameDev
             return mainContainer;
         }
 
-        /// <summary>
-        /// Returns or create container for category.
-        /// </summary>
         public Transform GetOrCreateContainerForCategory(CategoryType category)
         {
             Transform mainContainer = GetMainContainer();
@@ -385,9 +354,6 @@ namespace MolimoByLulucaGameDev
             if (spawnedRocks != null) spawnedRocks.RemoveAll(item => item == null);
         }
 
-        /// <summary>
-        /// Performs the clear forest operation.
-        /// </summary>
         public void ClearForest()
         {
             CleanNulls();

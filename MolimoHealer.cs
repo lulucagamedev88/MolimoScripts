@@ -3,18 +3,7 @@ using UnityEngine.InputSystem;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Responsável por transferir a energia do Container do Molimo para o Player.
-    ///
-    ///  • TickRefill():  quando o Container tem energia para uma barra inteira, passa-a de
-    ///                   uma vez para o Heal (a barra surge instantaneamente).
-    ///  • Resgate crítico (estado HealingPlayer do MolimoAI): quando o Heal está VAZIO e a PlayerHealth
-    ///                   está CRÍTICA, o Molimo voa ao peito e transfere energia do Container
-    ///                   DIRETAMENTE para a PlayerHealth até esta ficar CHEIA (ou o Container esvaziar).
-    ///
-    /// A cura manual (tecla Heal) é executada pelo PlayerHealth.TryStartHeal(); este script só
-    /// reencaminha o input para lá.
-    /// </summary>
+
     public class MolimoHealer : MonoBehaviour
     {
         private const float Epsilon = 0.0001f;
@@ -102,7 +91,6 @@ namespace MolimoByLulucaGameDev
                 healInputAction.action.performed -= OnHealInputPerformed;
             }
 
-            // ensures that enemies not ficam congelados nor the VFX enabled if the Molimo is desativado the middle.
             if (_isHealing || _pulseEffectsActive)
                 FinishHealing("desativado");
         }
@@ -111,9 +99,6 @@ namespace MolimoByLulucaGameDev
 
         #region Initialization
 
-        /// <summary>
-        /// Performs the initialize operation.
-        /// </summary>
         public void Initialize(Transform player, MolimoHealthContainer container)
         {
             _playerTransform = player;
@@ -156,9 +141,6 @@ namespace MolimoByLulucaGameDev
             RequestHeal();
         }
 
-        /// <summary>
-        /// Cura manual: o Player gasta uma camada do Heal. Sem energia no Heal, não acontece nada.
-        /// </summary>
         public bool RequestHeal()
         {
             if (Time.timeScale <= 0f) return false;
@@ -173,12 +155,6 @@ namespace MolimoByLulucaGameDev
 
         #region Refill (Container → Heal)
 
-        /// <summary>
-        /// Chamado a cada frame pelo MolimoAI (fora do resgate).
-        /// Quando o Container junta energia para uma barra inteira, transfere-a de uma vez:
-        /// a barra do Heal surge instantaneamente e o Container esvazia essa energia.
-        /// A energia retirada do Container é exatamente a que o Heal aceitou.
-        /// </summary>
         public void TickRefill()
         {
             if (_isHealing) return;
@@ -190,7 +166,6 @@ namespace MolimoByLulucaGameDev
 
             float cost = Mathf.Max(0.01f, energyCostPerHealEnergy);
 
-            // the bar at the time.
             float chunk = Mathf.Min(playerHealth.EnergyPerLayer, room);
             if (healthContainer.ExactEnergy + Epsilon < chunk * cost) return;
 
@@ -212,9 +187,6 @@ namespace MolimoByLulucaGameDev
 
         #region Rescue (Heal empty + PlayerHealth critical)
 
-        /// <summary>
-        /// O resgate começa quando: PlayerHealth crítica e viva, Heal completamente vazio e Container com energia.
-        /// </summary>
         public bool CanStartRescue()
         {
             if (_isHealing) return false;
@@ -229,9 +201,6 @@ namespace MolimoByLulucaGameDev
             return healthContainer.ExactEnergy > Epsilon;
         }
 
-        /// <summary>
-        /// Performs the start healing operation.
-        /// </summary>
         public void StartHealing()
         {
             _isHealing = true;
@@ -241,12 +210,6 @@ namespace MolimoByLulucaGameDev
             PlayRescueStartSound();
         }
 
-        /// <summary>
-        /// Tick do resgate. Devolve true enquanto o resgate deve continuar.
-        /// O resgate continua enquanto: Player vivo, Player com vida < máximo,
-        /// Container com energia. Não pára ao sair do estado crítico — o design
-        /// diz 'restabelecer a saúde até encher'.
-        /// </summary>
         public bool Tick()
         {
             if (!_isHealing) return false;
@@ -265,14 +228,12 @@ namespace MolimoByLulucaGameDev
                 return false;
             }
 
-            // Design: "restabelecer a saúde até encher" → só pára quando a vida estiver cheia.
             if (hp >= playerHealth.MaxHealth)
             {
                 FinishHealing("Player with health full");
                 return false;
             }
 
-            // Design: "se o Molimo tiver zero de energia no seu container, abortar a ajuda."
             if (healthContainer.ExactEnergy <= Epsilon)
             {
                 FinishHealing("Container empty");
@@ -290,9 +251,6 @@ namespace MolimoByLulucaGameDev
             return true;
         }
 
-        /// <summary>
-        /// Performs the cancel healing operation.
-        /// </summary>
         public void CancelHealing()
         {
             if (!_isHealing)
@@ -346,13 +304,6 @@ namespace MolimoByLulucaGameDev
             RescueTransferStep();
         }
 
-        /// <summary>
-        /// Um passo de transferência do resgate. Transação única:
-        ///   1) limita o orçamento ao que o Container tem;
-        ///   2) reparte em PlayerHealth (criticalHealthShare) e Heal (resto), cada uma limitada ao espaço livre;
-        ///   3) aplica;
-        ///   4) gasta no Container exatamente o que foi aplicado (sem dupla contagem, sem energia grátis).
-        /// </summary>
         private void RescueTransferStep()
         {
             float budget = Mathf.Min(rescueTransferRate * Time.deltaTime, healthContainer.ExactEnergy);
@@ -361,12 +312,10 @@ namespace MolimoByLulucaGameDev
             float cost = Mathf.Max(0.01f, energyCostPerHealEnergy);
             float hpPerEnergy = playerHealth.HealthPerEnergy;
 
-            // Parte of the PlayerHealth
             float healthEnergyBudget = budget * criticalHealthShare;
             float hpRoom = playerHealth.MaxHealth - playerHealth.CurrentHealth;
             float hpPlanned = Mathf.Min(healthEnergyBudget * hpPerEnergy, hpRoom);
 
-            // Parte of the Heal
             float healEnergyBudget = budget - healthEnergyBudget;
             float healPlanned = Mathf.Min(healEnergyBudget / cost, playerHealth.GetHealRoom());
 

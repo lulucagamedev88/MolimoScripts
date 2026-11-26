@@ -1,17 +1,3 @@
-// -----------------------------------------------------------------------------
-//  AbyssHazardTrigger.cs
-//  MolimoByLulucaGameDev
-//
-//  Responsabilidades:
-//    1) detect falls of the player → Brain.Die() + GridScreenTransition.Cover()
-//       + Brain.ReviveAt() + WeaponPickup.NotifyAllOfPlayerReset() + Reveal().
-//    2) detect falls of weapons/escudos → pickup.RecoverFromAbyss()
-//       (the pickup is DONO of the its own position of respawn).
-//
-//  the trigger not repositions weapons — only notifica. all the logic of
-//  "is where ir" vive in WeaponPickup.respawnPoint.
-// -----------------------------------------------------------------------------
-
 using System.Collections;
 using UnityEngine;
 
@@ -19,9 +5,7 @@ namespace MolimoByLulucaGameDev
 {
     [DisallowMultipleComponent]
     [AddComponentMenu("Molimo By Luluca/Abyss Hazard Trigger")]
-    /// <summary>
-    /// Provides the abyss hazard trigger component.
-    /// </summary>
+
     public sealed class AbyssHazardTrigger : MonoBehaviour
     {
         #region Inspector
@@ -90,10 +74,6 @@ namespace MolimoByLulucaGameDev
         private void OnTriggerEnter(Collider other) => TryProcessHazardEntry(other.gameObject);
         private void OnTriggerEnter2D(Collider2D other) => TryProcessHazardEntry(other.gameObject);
 
-        // [NOVO] Reavalia only weapons in Stay. Resolve the caso in that the Enter
-        // was locked by IsImmuneToAbyss (the weapon continues falling, never
-        // more dispara Enter). Player and Pieces continuam the use only Enter
-        // (prevents spam of the destroyEffectPrefab and keeps the debounce of the respawn).
         private void OnTriggerStay(Collider other)
         {
             RetryRecoverWeaponFromTrigger(other != null ? other.gameObject : null);
@@ -104,8 +84,6 @@ namespace MolimoByLulucaGameDev
             RetryRecoverWeaponFromTrigger(other != null ? other.gameObject : null);
         }
 
-        // [NOVO] last recurso: if the weapon saiu of the trigger still without recover
-        // (imunidade expirou outside the trigger), tries more once.
         private void OnTriggerExit(Collider other)
         {
             RetryRecoverWeaponFromTrigger(other != null ? other.gameObject : null);
@@ -136,8 +114,6 @@ namespace MolimoByLulucaGameDev
             if (destroyTarget != null) { TryDestroyHazardObject(destroyTarget); return; }
         }
 
-        // [NOVO] only tries recover weapons (called by Stay/Exit, is not
-        // disparar DestroyEffect several vezes in Pieces/Enemies).
         private void RetryRecoverWeapon(GameObject other)
         {
             GameObject recoverTarget = FindAncestorMatching(other.transform, recoverTags, recoverLayers);
@@ -215,14 +191,13 @@ namespace MolimoByLulucaGameDev
 
             try
             {
-                // 1) death
+
                 if (treatFallAsDeath && brain != null && brain.IsAlive)
                 {
                     Debug.Log("[AbyssHazardTrigger] Player caiu in the abismo — Die().");
                     brain.Die();
                 }
 
-                // 2) Cover
                 if (useTransition)
                     yield return transition.Cover();
                 else if (overrideFadeDuration > 0f)
@@ -233,7 +208,6 @@ namespace MolimoByLulucaGameDev
                 if (postCoverDelay > 0f)
                     yield return new WaitForSecondsRealtime(postCoverDelay);
 
-                // 3) Revive / Respawn of the player
                 if (brain == null)
                 {
                     Debug.LogWarning("[AbyssHazardTrigger] Brain invalid after cover. Abortando.", this);
@@ -246,12 +220,8 @@ namespace MolimoByLulucaGameDev
                 if (waitAfterTeleport > 0f)
                     yield return new WaitForSecondsRealtime(waitAfterTeleport);
 
-                // 4) Notificar all the weapons that the Player fez reset.
-                //    each the decide if must recover-if (baseado in the its state).
-                //    PlayerBrain already is alive here — the check brain.IsAlive in the pickup passes.
                 WeaponPickup.NotifyAllOfPlayerReset();
 
-                // 5) Hold + Reveal
                 if (useTransition)
                 {
                     float hold = holdDurationOverride >= 0f ? holdDurationOverride : transition.HoldDuration;
@@ -272,7 +242,7 @@ namespace MolimoByLulucaGameDev
                 if (useTransition && !revealed)
                 {
                     try { StartCoroutine(transition.Reveal()); }
-                    catch { /* ignore */ }
+                    catch {  }
                 }
                 _respawnInProgress = false;
             }
@@ -321,14 +291,10 @@ namespace MolimoByLulucaGameDev
         {
             if (target == null || IsPlayerHierarchy(target)) return;
 
-            // [FIX] search also in the parent: the collider that dispara the trigger
-            // can be the child (layer Shield) without the component WeaponPickup.
             WeaponPickup pickup = target.GetComponent<WeaponPickup>()
                                ?? target.GetComponentInParent<WeaponPickup>()
                                ?? target.GetComponentInChildren<WeaponPickup>();
 
-            // [FIX] not destroy when not finds the component — can be only
-            // the child of the prefab. Avisar and abandonar (the causa the of the bug).
             if (pickup == null)
             {
                 Debug.LogWarning(
@@ -337,8 +303,6 @@ namespace MolimoByLulucaGameDev
                 return;
             }
 
-            // if the weapon still is imune, the OnTriggerStay / OnTriggerExit desta
-            // same class will return the try thus that the imunidade expirar.
             if (pickup.IsImmuneToAbyss) return;
 
             pickup.RecoverFromAbyss();

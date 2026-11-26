@@ -2,18 +2,7 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Componente leve anexado ao trigger de entrada/saída de QUALQUER área.
-    /// Responsabilidade única: detectar o Player e delegar ao TeleportManager.
-    ///
-    /// ✦ FACING:
-    ///   Por padrão, o Player aparece com o +Z (forward) alinhado à direção
-    ///   do +Z DESTE SpawnPoint. Ou seja: gire o SpawnPoint para escolher para
-    ///   onde o Player vai olhar ao surgir.
-    ///
-    ///   Se 'Facing Target' estiver atribuído, ele tem PRIORIDADE e o Player
-    ///   olhará para esse Transform em vez do +Z do SpawnPoint.
-    /// </summary>
+
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Collider))]
     [AddComponentMenu("Molimo/Teleport/Teleport Node")]
@@ -53,11 +42,9 @@ namespace MolimoByLulucaGameDev
         [Tooltip("time minimum between disparos DESTE node specific.")]
         [SerializeField] private float localCooldown = 0.25f;
 
-        // Runtime
         private Collider _triggerCollider;
         private float _lastFireTime = -999f;
 
-        // properties public (consumidas by TeleportManager)
         public GameObject CurrentArea => currentArea;
         public GameObject TargetArea => targetArea;
         public GameObject[] KeepActive => keepActive;
@@ -65,9 +52,6 @@ namespace MolimoByLulucaGameDev
         public Transform FacingTarget => facingTarget;
         public string PlayerTag => playerTag;
 
-        // =====================================================================
-        //  Ciclo of health
-        // =====================================================================
         private void Awake()
         {
             _triggerCollider = GetComponent<Collider>();
@@ -98,9 +82,6 @@ namespace MolimoByLulucaGameDev
             if (localCooldown < 0f) localCooldown = 0f;
         }
 
-        // =====================================================================
-        //  detection
-        // =====================================================================
         private void OnTriggerEnter(Collider other)
         {
             if (other == null || other == _triggerCollider) return;
@@ -142,18 +123,16 @@ namespace MolimoByLulucaGameDev
 
             if (spawnPoint != null)
             {
-                // Esfera of the SpawnPoint
+
                 Gizmos.color = Color.magenta;
                 Gizmos.DrawWireSphere(spawnPoint.position, 0.3f);
 
-                // line of the trigger until the SpawnPoint
                 if (targetArea != null)
                 {
                     Gizmos.color = new Color(1f, 0.3f, 1f, 0.6f);
                     Gizmos.DrawLine(transform.position, spawnPoint.position);
                 }
 
-                // +Z of the SpawnPoint = direction in that the Player vai look when the appear
                 Vector3 forward = spawnPoint.forward;
                 forward.y = 0f;
 
@@ -162,10 +141,9 @@ namespace MolimoByLulucaGameDev
                     forward.Normalize();
                     Vector3 tip = spawnPoint.position + forward * 1.5f;
 
-                    Gizmos.color = new Color(1f, 0.85f, 0.1f, 1f); // amarelo
+                    Gizmos.color = new Color(1f, 0.85f, 0.1f, 1f);
                     Gizmos.DrawLine(spawnPoint.position, tip);
 
-                    // "Bico" of the seta
                     Vector3 right = Vector3.Cross(Vector3.up, forward).normalized;
                     Vector3 back = -forward * 0.3f;
                     Gizmos.DrawLine(tip, tip + back + right * 0.15f);
@@ -173,7 +151,6 @@ namespace MolimoByLulucaGameDev
                 }
             }
 
-            // Facing Target: seta of the SpawnPoint until it (if assigned)
             if (spawnPoint != null && facingTarget != null)
             {
                 Gizmos.color = new Color(1f, 0.4f, 0.9f, 0.9f);

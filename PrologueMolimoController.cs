@@ -5,9 +5,7 @@ using UnityEngine.InputSystem;
 namespace MolimoByLulucaGameDev
 {
     [RequireComponent(typeof(Rigidbody))]
-    /// <summary>
-    /// Provides the prologue molimo controller component.
-    /// </summary>
+
     public class PrologueMolimoController : MonoBehaviour
     {
         [Header("Movement")]
@@ -46,7 +44,6 @@ namespace MolimoByLulucaGameDev
                  "is ativado (Checked) when the PrologueMolimo passes the controle is the Player.")]
         [SerializeField] private GameObject molimoHUD;
 
-        // ==================== visual / light PULSANTE ====================
         [Header("PrologueMolimo visual (light Pulsante)")]
         [Tooltip("MeshRenderer of the PrologueMolimo (the 'light' voadora). " +
                  "if remain empty, is searched automatically in the children.")]
@@ -106,18 +103,10 @@ namespace MolimoByLulucaGameDev
         [Tooltip("how fast the transition is the state calmo acontece.")]
         [SerializeField] private float calmBlendSpeed = 2f;
 
-        // ==================== position shared ====================
-        /// <summary>
-        /// Gets or sets the last prologue position value.
-        /// </summary>
         public static Vector3 LastProloguePosition { get; private set; }
-        /// <summary>
-        /// Gets or sets the last prologue rotation value.
-        /// </summary>
+
         public static Quaternion LastPrologueRotation { get; private set; }
-        /// <summary>
-        /// Gets or sets the has valid prologue position value.
-        /// </summary>
+
         public static bool HasValidProloguePosition { get; private set; }
 
         private const float DetectionRadius = 2.0f;
@@ -132,7 +121,6 @@ namespace MolimoByLulucaGameDev
 
         private float _resolvedPadding = 0f;
 
-        // Cache visual
         private Vector3 _initialScale;
         private float _initialLightIntensity;
         private float _pulseStartTime;
@@ -241,7 +229,6 @@ namespace MolimoByLulucaGameDev
             rb.linearVelocity = vel;
         }
 
-        // ==================== pulse ====================
         private void UpdatePulse()
         {
             if (prologueMolimoMesh == null && prologueMolimoLight == null) return;
@@ -297,7 +284,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // ==================== BOUND / CLAMP ====================
         private float ResolvePadding()
         {
             if (boundPadding > 0f) return boundPadding;
@@ -342,7 +328,6 @@ namespace MolimoByLulucaGameDev
             return bt.TransformPoint(local + bound.center);
         }
 
-        // ==================== detection ====================
         private void CheckPlayerProximity()
         {
             if (playerBrain == null) return;
@@ -360,7 +345,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // ==================== interaction ====================
         private void HandleInteraction()
         {
             if (!playerDetected) return;
@@ -418,7 +402,6 @@ namespace MolimoByLulucaGameDev
             Destroy(gameObject);
         }
 
-        // ==================== GIZMOS ====================
         private void OnDrawGizmos()
         {
             Gizmos.color = new Color(1f, 0.9f, 0f, 0.25f);

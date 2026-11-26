@@ -3,32 +3,12 @@ using UnityEngine.InputSystem;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// ANIMATION EVENTS (todos com parâmetro INT = número do estágio):
-    ///
-    ///   Clip            Estágio   Eventos
-    ///   Attack1         1         AE_OpenComboWindow(1)  ... AE_EndAttack(1)
-    ///   Combat_Attack2  2         AE_OpenComboWindow(2)  ... AE_EndAttack(2)
-    ///   K_Combo01_1     3         AE_OpenComboWindow(3)  ... AE_EndAttack(3)
-    ///   K_Combo01_2     4         AE_OpenComboWindow(4)  ... AE_EndAttack(4)
-    ///   K_Combo01_3     5         AE_OpenComboWindow(5)  ... AE_EndAttack(5)
-    ///   K_Combo01_4     6         (sem Open)             ... AE_EndAttack(6)
-    ///
-    /// AE_CloseComboWindow(n) é opcional (só se quiseres fechar a janela antes do fim do clip).
-    /// AE_EndCombo foi removido: usa AE_EndAttack(6).
-    ///
-    /// ANTI-MASHING: se o jogador esmagar o botão de ataque (vários cliques muito rápidos),
-    /// o input é ignorado e o combo não avança durante mashReleaseDelay segundos após a ativação.
-    /// </summary>
+
     public class PlayerCombat : MonoBehaviour
     {
-        // ============================================================
-        // STEP FORWARD DATA
-        // ============================================================
+
         [System.Serializable]
-        /// <summary>
-        /// Represents step forward data data.
-        /// </summary>
+
         public struct StepForwardData
         {
             public float speed;
@@ -37,9 +17,6 @@ namespace MolimoByLulucaGameDev
             public float Displacement => speed * duration;
         }
 
-        // ============================================================
-        // ATTACK STAGES
-        // ============================================================
         private enum AttackStage
         {
             None = 0,
@@ -51,9 +28,6 @@ namespace MolimoByLulucaGameDev
             Combo4 = 6
         }
 
-        // ============================================================
-        // ANIMATION
-        // ============================================================
         [Header("Animation")]
         [SerializeField] private Animator animator;
 
@@ -67,9 +41,6 @@ namespace MolimoByLulucaGameDev
         [Tooltip("Nome of the state of locomotion (Base Layer) used when the attack is cancelado.")]
         [SerializeField] private string locomotionStateName = "Locomotion";
 
-        // ============================================================
-        // COMBO / INPUT BUFFER
-        // ============================================================
         [Header("Combo / Input Buffer")]
         [Tooltip("time (s) that the click done before of the window open remains guardado. " +
                  "when the window opens, the click is consumido if still is valid.")]
@@ -79,9 +50,6 @@ namespace MolimoByLulucaGameDev
                  "never smaller that the clip more longo.")]
         [SerializeField] private float attackSafetyTimeout = 4f;
 
-        // ============================================================
-        // ANTI-MASHING
-        // ============================================================
         [Header("Anti Button-Mashing")]
         [SerializeField] private bool enableAntiMash = true;
 
@@ -108,10 +76,6 @@ namespace MolimoByLulucaGameDev
         [Tooltip("if active, the attack in curso also is cut when the mashing is detected.")]
         [SerializeField] private bool cancelCurrentAttackOnMash = false;
 
-        /// <summary>Disparado when the mashing é detetado. Liga aqui feedback (sound, VFX, UI).</summary>
-        /// <summary>
-        /// Raised when on mash penalty changes.
-        /// </summary>
         public event System.Action OnMashPenalty;
 
         private float lastAttackClickTime = -999f;
@@ -119,9 +83,6 @@ namespace MolimoByLulucaGameDev
         private bool mashLockActive = false;
         private float mashLockEndTime = 0f;
 
-        // ============================================================
-        // MOVEMENT LOCK
-        // ============================================================
         [Header("Movement Lock")]
         [Tooltip("if active, the movement remains locked during all the attack (until when the end/cancel). " +
                  "if disabled, uses the durations below.")]
@@ -130,9 +91,6 @@ namespace MolimoByLulucaGameDev
         [SerializeField] private float attack2MovementLockDuration = 0.3f;
         [SerializeField] private float comboMovementLockDuration = 0.3f;
 
-        // ============================================================
-        // STEP FORWARD (indexado by stage - 1)
-        // ============================================================
         [Header("Attack Step Forward Settings")]
         [SerializeField] private bool useAttackStepForward = true;
 
@@ -140,17 +98,11 @@ namespace MolimoByLulucaGameDev
         [SerializeField]
         private StepForwardData[] stepForwardData = DefaultStepForward();
 
-        // ============================================================
-        // EDGE / ABYSS PROTECTION
-        // ============================================================
         [Header("Edge / Abyss Protection")]
         [SerializeField] private bool enableEdgeProtection = true;
         [SerializeField] private PlayerSurfaceProbe surfaceProbe;
         [SerializeField] private bool stopHorizontallyOnEdge = true;
 
-        // ============================================================
-        // HARDENING
-        // ============================================================
         [Header("Step Forward Hardening")]
         [SerializeField] private bool hardenStepForward = true;
         [SerializeField] private bool suppressRootMotionDuringStep = true;
@@ -158,9 +110,6 @@ namespace MolimoByLulucaGameDev
 
         private float attackStartupGraceTimer = 0f;
 
-        // ============================================================
-        // STEP FORWARD: stop when the CONTACTO with enemies
-        // ============================================================
         [Header("Step Forward: Contacto with enemies")]
         [Tooltip("the step stops when there is the enemy to the forward. prevents atravessar the target and deixa the knockback be visible.")]
         [SerializeField] private bool stopStepOnEnemyContact = true;
@@ -171,17 +120,11 @@ namespace MolimoByLulucaGameDev
         [SerializeField] private float stepProbeBottom = 0.2f;
         [SerializeField] private float stepProbeTop = 1.2f;
 
-        // ============================================================
-        // GROUP COMBAT & TARGETING
-        // ============================================================
         [Header("Group Combat Settings")]
         [SerializeField] private float groupDetectionRadius = 3.5f;
         [SerializeField] private float visionConeDotThreshold = 0.2f;
         [SerializeField] private LayerMask enemyLayer;
 
-        // ============================================================
-        // BLOCK SETTINGS
-        // ============================================================
         [Header("Block Settings")]
         [SerializeField] private float blockDuration = 0.4f;
         [SerializeField] private Collider shieldCollider;
@@ -195,9 +138,6 @@ namespace MolimoByLulucaGameDev
         [Tooltip("smoothing of the rotation during the Block. 0 = instant.")]
         [SerializeField] private float blockFacingSlerpSpeed = 20f;
 
-        // ============================================================
-        // PRIVATE VARIABLES
-        // ============================================================
         private PlayerBrain brain;
         private Rigidbody rb;
 
@@ -245,9 +185,6 @@ namespace MolimoByLulucaGameDev
 
         private static readonly Collider[] targetScanBuffer = new Collider[24];
 
-        // ============================================================
-        // PUBLIC PROPERTIES
-        // ============================================================
         public bool IsInitialized => isInitialized;
         public bool HasWeapon => hasWeapon;
         public bool HasShield => hasShield;
@@ -268,12 +205,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // ============================================================
-        // INITIALIZATION
-        // ============================================================
-        /// <summary>
-        /// Performs the initialize operation.
-        /// </summary>
         public void Initialize(PlayerBrain brainReference, Rigidbody rigidbody)
         {
             brain = brainReference;
@@ -296,7 +227,6 @@ namespace MolimoByLulucaGameDev
 
             isInitialized = true;
 
-            // Reaplica the state caso SetHasWeapon/SetHasShield tenham sido chamados before of the Initialize.
             ApplyEquipmentState();
         }
 
@@ -370,9 +300,6 @@ namespace MolimoByLulucaGameDev
                 stepForwardData = DefaultStepForward();
         }
 
-        // ============================================================
-        // EDGE PROTECTION
-        // ============================================================
         private bool IsGroundAhead()
         {
             if (!enableEdgeProtection) return true;
@@ -381,12 +308,6 @@ namespace MolimoByLulucaGameDev
             return surfaceProbe.HasSurfaceAhead(stepDirection);
         }
 
-        // ============================================================
-        // WEAPON / SHIELD / PERMISSION STATE
-        // ============================================================
-        /// <summary>
-        /// Sets has weapon.
-        /// </summary>
         public void SetHasWeapon(bool equipped)
         {
             hasWeapon = equipped;
@@ -394,9 +315,6 @@ namespace MolimoByLulucaGameDev
             if (!hasWeapon) CancelAttack();
         }
 
-        /// <summary>
-        /// Sets has shield.
-        /// </summary>
         public void SetHasShield(bool equipped)
         {
             hasShield = equipped;
@@ -404,11 +322,6 @@ namespace MolimoByLulucaGameDev
             if (!hasShield) CancelBlock();
         }
 
-
-        /// <summary>
-        /// O PlayerBrain chama isto quando o Player rola, trepa, cai, leva knockdown, etc.
-        /// allowed = false cancela ataque/block e ignora input de combate.
-        /// </summary>
         public void SetCombatAllowed(bool allowed)
         {
             combatAllowed = allowed;
@@ -416,14 +329,10 @@ namespace MolimoByLulucaGameDev
             {
                 CancelAttack();
                 CancelBlock();
-                rapidClickCount = 0; // anti-mash: restarts the count
+                rapidClickCount = 0;
             }
         }
 
-        /// <summary>Interrompe the attack current (hit stun, knockdown, sword clash, roll...).</summary>
-        /// <summary>
-        /// Performs the interrupt attack operation.
-        /// </summary>
         public void InterruptAttack() => CancelAttack();
 
         private void ApplyEquipmentState()
@@ -449,12 +358,6 @@ namespace MolimoByLulucaGameDev
             inputActions.Player.Block.Disable();
         }
 
-        // ============================================================
-        // UPDATE LOOPS
-        // ============================================================
-        /// <summary>
-        /// Performs the tick combat operation.
-        /// </summary>
         public void TickCombat()
         {
             if (!isInitialized) return;
@@ -480,10 +383,6 @@ namespace MolimoByLulucaGameDev
             UpdateBlockTimer();
         }
 
-        // called the partir of the FixedUpdate of the PlayerBrain: timers of the step ficam in time of physics.
-        /// <summary>
-        /// Performs the tick combat physics operation.
-        /// </summary>
         public void TickCombatPhysics()
         {
             if (!isInitialized || !hasWeapon) return;
@@ -491,9 +390,6 @@ namespace MolimoByLulucaGameDev
             ApplyStepForwardPhysics();
         }
 
-        /// <summary>
-        /// Performs the tick combat late physics operation.
-        /// </summary>
         public void TickCombatLatePhysics()
         {
             if (!hardenStepForward) return;
@@ -516,8 +412,6 @@ namespace MolimoByLulucaGameDev
                 stepDirection.z * currentStepSpeed);
         }
 
-        // attention: only can existir the OnAnimatorMove by GameObject that chame ApplyBuiltinRootMotion,
-        // and only is called if this script is in the same GameObject of the Animator.
         private void OnAnimatorMove()
         {
             if (animator == null) return;
@@ -534,17 +428,12 @@ namespace MolimoByLulucaGameDev
             animator.ApplyBuiltinRootMotion();
         }
 
-        // ============================================================
-        // ANTI-MASHING
-        // ============================================================
-        /// <summary>returns true if este clique must be ignored by causa of mashing.</summary>
         private bool IsMashingBlocked()
         {
             if (!enableAntiMash) return false;
 
             float now = Time.time;
 
-            // lock ativo: ignores the clique without prolongar the lock.
             if (mashLockActive)
             {
                 if (debugAntiMash)
@@ -560,7 +449,7 @@ namespace MolimoByLulucaGameDev
             bool rapid = tooFastSinceLastClick || tooEarlyInStage;
 
             if (rapid) rapidClickCount++;
-            else rapidClickCount = 0; // clique calmo resets the contagem
+            else rapidClickCount = 0;
 
             if (debugAntiMash)
                 Debug.Log($"[Combat/AntiMash] intervalo={interval:F2}s precoce={tooEarlyInStage} " +
@@ -585,7 +474,6 @@ namespace MolimoByLulucaGameDev
             return false;
         }
 
-        // the lock ends mashReleaseDelay seconds depois of the activation.
         private void UpdateMashLock()
         {
             if (!mashLockActive) return;
@@ -595,9 +483,6 @@ namespace MolimoByLulucaGameDev
             rapidClickCount = 0;
         }
 
-        // ============================================================
-        // INPUT BUFFER
-        // ============================================================
         private bool IsBufferValid => attackInputBuffered
                                       && (preserveBufferedInputThroughMashLock
                                           ? Time.time <= mashLockEndTime
@@ -629,12 +514,9 @@ namespace MolimoByLulucaGameDev
             return stage >= AttackStage.Attack1 && stage <= AttackStage.Combo3;
         }
 
-        // ============================================================
-        // TARGETING
-        // ============================================================
         private static bool IsTargetAlive(Collider col)
         {
-            // GetComponentInParent already inclui the own GameObject.
+
             IDamageable damageable = col.GetComponentInParent<IDamageable>();
             return damageable == null || damageable.CurrentHealth > 0f;
         }
@@ -740,9 +622,6 @@ namespace MolimoByLulucaGameDev
                 SetRotation(targetRotation);
         }
 
-        // ============================================================
-        // TARGET KILL & GROUP COMBAT
-        // ============================================================
         private int GetNearbyAliveEnemiesCount(GameObject ignoreEnemy = null)
         {
             int count = Physics.OverlapSphereNonAlloc(transform.position, groupDetectionRadius, targetScanBuffer, enemyLayer);
@@ -763,9 +642,6 @@ namespace MolimoByLulucaGameDev
             return aliveCount;
         }
 
-        /// <summary>
-        /// Handles target killed events.
-        /// </summary>
         public void OnTargetKilled(GameObject killedEnemy = null, bool stopCurrentAnimationImmediately = false)
         {
             int remainingEnemies = GetNearbyAliveEnemiesCount(killedEnemy);
@@ -775,9 +651,6 @@ namespace MolimoByLulucaGameDev
                 CancelAttack();
         }
 
-        /// <summary>
-        /// Performs the ae_check combat end operation.
-        /// </summary>
         public void AE_CheckCombatEnd()
         {
             if (attackStartupGraceTimer > 0f) return;
@@ -785,15 +658,6 @@ namespace MolimoByLulucaGameDev
                 CancelAttack();
         }
 
-        // ============================================================
-        // ANIMATION EVENTS — all validate the stage, so events
-        // atrasados of the clip previous (during the blend) are ignorados.
-        // ============================================================
-
-        /// <summary>Abre the window of continuação. remains open until when the end of the attack.</summary>
-        /// <summary>
-        /// Performs the ae_open combo window operation.
-        /// </summary>
         public void AE_OpenComboWindow(int stage)
         {
             if (!isAttacking || (int)currentStage != stage) return;
@@ -801,8 +665,6 @@ namespace MolimoByLulucaGameDev
 
             comboWindowOpen = true;
 
-            // consumes already the click guardado (without wait by next TickCombat),
-            // but keeps-in the during the lock anti-mash.
             if (IsBufferValid && !(enableAntiMash && mashLockActive))
             {
                 attackInputBuffered = false;
@@ -811,29 +673,18 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        /// <summary>optional: fecha the window before of the end of the clip.</summary>
-        /// <summary>
-        /// Performs the ae_close combo window operation.
-        /// </summary>
         public void AE_CloseComboWindow(int stage)
         {
             if ((int)currentStage != stage) return;
             comboWindowOpen = false;
         }
 
-        /// <summary>end of the clip. Colocar in all the 6 clips with the respetivo number.</summary>
-        /// <summary>
-        /// Performs the ae_end attack operation.
-        /// </summary>
         public void AE_EndAttack(int stage)
         {
             if (!isAttacking || (int)currentStage != stage) return;
             FinishAttack();
         }
 
-        // ============================================================
-        // STEP FORWARD
-        // ============================================================
         private void TriggerStepForward(int stepIndex)
         {
             if (!useAttackStepForward) return;
@@ -860,8 +711,6 @@ namespace MolimoByLulucaGameDev
             currentStepSpeed = 0f;
         }
 
-        // CapsuleCast (and not esfera) because enemies baixos, the the spider, passavam by down of the sonda.
-        // Queries ignore Physics.IgnoreCollision, so they work even when Player/Enemy do not collide.
         private bool IsEnemyAheadOfStep()
         {
             if (!stopStepOnEnemyContact) return false;
@@ -919,9 +768,6 @@ namespace MolimoByLulucaGameDev
                 stepDirection.z * currentStepSpeed);
         }
 
-        // ============================================================
-        // ATTACK FLOW
-        // ============================================================
         private void HandleAttackInput()
         {
             if (currentStage == AttackStage.None)
@@ -947,13 +793,11 @@ namespace MolimoByLulucaGameDev
         {
             if (!CanAdvanceFrom(currentStage)) return;
 
-            // Anti-mash: with the lock active the combo not advances (the attack current acaba and ready).
             if (enableAntiMash && mashLockActive)
                 return;
 
             AttackStage nextStage = currentStage + 1;
 
-            // Reenquadra the target when entering in the combo; inside the combo keeps rotation.
             EnterStage(nextStage, faceTarget: nextStage == AttackStage.Combo1);
         }
 
@@ -1009,7 +853,7 @@ namespace MolimoByLulucaGameDev
                 case AttackStage.Combo1:
                 case AttackStage.Combo2:
                 case AttackStage.Combo3:
-                case AttackStage.Combo4: // Combo4 also uses the trigger "Combo" (Combo01_3 -> Combo01_4)
+                case AttackStage.Combo4:
                     lockDuration = comboMovementLockDuration;
                     triggerHash = comboTriggerHash;
                     hasTrigger = hasComboTriggerParameter;
@@ -1031,9 +875,6 @@ namespace MolimoByLulucaGameDev
             if (hasComboTriggerParameter) animator.ResetTrigger(comboTriggerHash);
         }
 
-        // ============================================================
-        // TIMERS
-        // ============================================================
         private void UpdateAttackSafetyTimeout()
         {
             if (!isAttacking) return;
@@ -1061,9 +902,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // ============================================================
-        // END / CANCEL
-        // ============================================================
         private void ResetAttackState()
         {
             isAttacking = false;
@@ -1080,7 +918,6 @@ namespace MolimoByLulucaGameDev
             if (!isBlocking) brain?.SetMovementInputLocked(false);
         }
 
-        // end natural: the Animator exits by IsAttacking == false.
         private void FinishAttack()
         {
             ResetAttackState();
@@ -1088,16 +925,10 @@ namespace MolimoByLulucaGameDev
             if (animator != null)
             {
                 if (hasIsAttackingParameter) animator.SetBool(isAttackingParameterHash, false);
-                ResetAttackTriggers(); // prevents triggers "presos" the disparar transitions more tarde
+                ResetAttackTriggers();
             }
         }
 
-        // Cancelamento forced.
-        // forceReturnToLocomotion = true  → does CrossFade is Locomotion (behavior old).
-        // forceReturnToLocomotion = false → not toca in the Animator (deixa the PlayerBrain controlar the animation:
-        //                                    Knockdown, Roll, PlayerClimb, Death, etc.).
-        // the CrossFade only ocorre also if combatAllowed == true, is never cortar animations
-        // controladas by other system when SetCombatAllowed(false) is the correr.
         private void CancelAttack(bool forceReturnToLocomotion = true)
         {
             bool wasAttacking = isAttacking;
@@ -1116,9 +947,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // ============================================================
-        // BLOCK METHODS
-        // ============================================================
         private void HandleBlockInput()
         {
             if (isBlocking) return;
@@ -1142,7 +970,6 @@ namespace MolimoByLulucaGameDev
                 animator.SetTrigger(blockTriggerHash);
         }
 
-        // Equivale when the behavior previous: enfrenta always the enemy more next.
         private void UpdateBlockFacing()
         {
             if (!isBlocking || !keepFacingEnemyDuringBlock) return;
@@ -1172,25 +999,17 @@ namespace MolimoByLulucaGameDev
             if (isBlocking) EndBlock();
         }
 
-        // ============================================================
-        // INPUT CALLBACKS
-        // ============================================================
         private void OnAttackPerformed(InputAction.CallbackContext context)
         {
             if (!isInitialized || !hasWeapon || !combatAllowed) return;
             if (brain != null && !brain.IsAlive) return;
             if (isBlocking) return;
 
-            if (IsMashingBlocked()) return; // anti-mash: ignores the click
+            if (IsMashingBlocked()) return;
 
-            // the buffer existing cannot be replaced, renewed or
-            // transformed num second advance by same period of attack.
             if (isAttacking && CanAdvanceFrom(currentStage) && attackInputBuffered)
                 return;
 
-            // preserves in the maximum the input of continuation during the attack.
-            // this input not dispara attacks adicionais: only will be consumido
-            // when the window of combo is valid.
             if (isAttacking && CanAdvanceFrom(currentStage))
             {
                 attackInputBuffered = true;
@@ -1221,9 +1040,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // ============================================================
-        // CLEANUP
-        // ============================================================
         private void OnDestroy()
         {
             if (inputActions == null) return;

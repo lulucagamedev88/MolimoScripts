@@ -3,17 +3,12 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Provides the player inventory component.
-    /// </summary>
+
     public class PlayerInventory : MonoBehaviour
     {
         [Header("Inventory Data")]
         [SerializeField] private List<LootItem> items = new List<LootItem>();
 
-        /// <summary>
-        /// Performs the add item operation.
-        /// </summary>
         public void AddItem(LootItem item)
         {
             if (item == null) return;
@@ -22,17 +17,11 @@ namespace MolimoByLulucaGameDev
             Debug.Log($"[inventory] Adicionado: {item.itemName}");
         }
 
-        /// <summary>
-        /// Performs the removes item operation.
-        /// </summary>
         public bool RemoveItem(LootItem item)
         {
             return items.Remove(item);
         }
 
-        /// <summary>
-        /// Returns items.
-        /// </summary>
         public List<LootItem> GetItems()
         {
             return items;

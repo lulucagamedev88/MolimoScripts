@@ -3,14 +3,11 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Provides the player health component.
-    /// </summary>
+
     public class PlayerHealth : MonoBehaviour
     {
         private const float Epsilon = 0.0001f;
 
-        // interval maximum between dois ApplyEnergyHeal is serem considerados the same "session" of healing.
         private const float EnergyHealSessionGap = 0.35f;
 
         [Header("References")]
@@ -71,43 +68,25 @@ namespace MolimoByLulucaGameDev
         private float lastStaminaUseTime;
         private bool isExhausted = false;
 
-        // reserve Heal (runtime)
         private float[] healLayers;
         private bool isHealing;
-        private float pendingHealHP;   // HP still by entregar of the(s) bar(s) spends(s)
+        private float pendingHealHP;
         private float lastEnergyHealTime = -10f;
 
-        // EVENTOS (Adicionados/Adaptados is the HUD)
-        /// <summary>
-        /// Raised when on damaged changes.
-        /// </summary>
         public event Action<float> OnDamaged;
-        /// <summary>
-        /// Raised when on healed changes.
-        /// </summary>
-        public event Action<float> OnHealed;                 // HP efetivamente curados in each application
-        /// <summary>
-        /// Raised when on death changes.
-        /// </summary>
+
+        public event Action<float> OnHealed;
+
         public event Action OnDeath;
-        /// <summary>
-        /// Raised when on health changed changes.
-        /// </summary>
+
         public event Action<float, float> OnHealthChanged;
-        /// <summary>
-        /// Raised when on stamina changed changes.
-        /// </summary>
+
         public event Action<float, float> OnStaminaChanged;
 
-        /// <summary>
-        /// Raised when on heal reserve changed changes.
-        /// </summary>
         public event Action<float, float> OnHealReserveChanged;
 
-        /// <summary>start of the sessão of healing (tecla Heal or rescue of Molimo). Ideal for the sound.</summary>
         public event Action OnHealingStarted;
 
-        /// <summary>end of the healing manual (tecla Heal).</summary>
         public event Action OnHealingStopped;
 
         public float MaxHealth => maxHealth;
@@ -123,14 +102,12 @@ namespace MolimoByLulucaGameDev
         public float BlockStaminaCost => blockStaminaCost;
         public float JumpStaminaCost => jumpStaminaCost;
 
-        // PlayerHealth critical
         public float CriticalHealthThreshold => criticalHealthThreshold;
         public bool IsCritical =>
             brain != null && brain.IsAlive &&
             currentHealth > 0f &&
             currentHealth <= maxHealth * criticalHealthThreshold;
 
-        // Heal
         public int HealLayerCount => EnsureHealLayers().Length;
         public float EnergyPerLayer => energyPerLayer;
         public float MaxHealEnergy => EnsureHealLayers().Length * energyPerLayer;
@@ -149,7 +126,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        /// <summary>number of barras cheias (the únicas que o Player pode gastar).</summary>
         public int FullHealLayers
         {
             get
@@ -164,7 +140,6 @@ namespace MolimoByLulucaGameDev
 
         public bool HasFullHealLayer => FullHealLayers > 0;
 
-        /// <summary>Heal empty = none bar full available.</summary>
         public bool IsHealEmpty => !HasFullHealLayer;
         public bool IsHealFull => MaxHealEnergy - CurrentHealEnergy <= Epsilon;
 
@@ -173,9 +148,6 @@ namespace MolimoByLulucaGameDev
             EnsureHealLayers();
         }
 
-        /// <summary>
-        /// Performs the initialize operation.
-        /// </summary>
         public void Initialize(PlayerBrain brainRef)
         {
             brain = brainRef;
@@ -184,10 +156,6 @@ namespace MolimoByLulucaGameDev
             ResetToFull();
         }
 
-
-        /// <summary>
-        /// Repõe PlayerHealth, Stamina e Rage. A reserva Heal NÃO é alterada (respawn mantém o Heal).
-        /// </summary>
         public void ResetToFull()
         {
             StopHeal();
@@ -207,9 +175,6 @@ namespace MolimoByLulucaGameDev
             OnStaminaChanged?.Invoke(currentStamina, maxStamina);
         }
 
-        /// <summary>
-        /// Performs the tick health operation.
-        /// </summary>
         public void TickHealth()
         {
             if (brain == null) return;
@@ -226,17 +191,11 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        /// <summary>
-        /// Performs the take damage operation.
-        /// </summary>
         public void TakeDamage(float amount)
         {
             TakeDamage(amount, null);
         }
 
-        /// <summary>
-        /// Performs the take damage operation.
-        /// </summary>
         public void TakeDamage(float amount, GameObject damageSource)
         {
             if (brain == null || !brain.IsAlive) return;
@@ -283,28 +242,16 @@ namespace MolimoByLulucaGameDev
             return source.GetComponentInParent<EnemyMotherSpider>() != null;
         }
 
-        // ============================================================
-        // healing direct (legado / debug) — not spends the reserve Heal.
-        // ============================================================
-        /// <summary>
-        /// Performs the heal operation.
-        /// </summary>
         public void Heal(float amount)
         {
             ApplyHealthGain(amount);
         }
 
-        /// <summary>
-        /// Performs the heal percent operation.
-        /// </summary>
         public void HealPercent(float percent)
         {
             Heal(maxHealth * Mathf.Clamp01(percent));
         }
 
-        /// <summary>
-        /// Núcleo único de ganho de vida. Devolve os HP realmente aplicados.
-        /// </summary>
         private float ApplyHealthGain(float amount)
         {
             if (brain == null || !brain.IsAlive) return 0f;
@@ -328,9 +275,6 @@ namespace MolimoByLulucaGameDev
             return applied;
         }
 
-        // ============================================================
-        // reserve HEAL (layers)
-        // ============================================================
         private float[] EnsureHealLayers()
         {
             int count = Mathf.Max(1, healLayerCount);
@@ -349,7 +293,6 @@ namespace MolimoByLulucaGameDev
             return healLayers;
         }
 
-        /// <summary>energy current of the layer (0 the EnergyPerLayer). outside the intervalo returns 0.</summary>
         public float GetHealLayerEnergy(int index)
         {
             float[] layers = EnsureHealLayers();
@@ -357,9 +300,6 @@ namespace MolimoByLulucaGameDev
             return layers[index];
         }
 
-        /// <summary>
-        /// Espaço livre disponível para o Molimo abastecer.
-        /// </summary>
         public float GetHealRoom()
         {
             float[] layers = EnsureHealLayers();
@@ -369,10 +309,6 @@ namespace MolimoByLulucaGameDev
             return room;
         }
 
-        /// <summary>
-        /// Adiciona energia ao Heal, enchendo a primeira camada com espaço, depois a seguinte.
-        /// Devolve a energia REALMENTE aceite — quem chama só deve gastar essa quantidade.
-        /// </summary>
         public float AddHealEnergy(float amount)
         {
             if (amount <= 0f) return 0f;
@@ -398,10 +334,6 @@ namespace MolimoByLulucaGameDev
             return accepted;
         }
 
-        /// <summary>
-        /// Cura diretamente a PlayerHealth com energia fornecida pelo Molimo (resgate crítico).
-        /// Recebe HP e devolve os HP realmente aplicados.
-        /// </summary>
         public float ApplyEnergyHeal(float hp)
         {
             float applied = ApplyHealthGain(hp);
@@ -417,13 +349,6 @@ namespace MolimoByLulucaGameDev
             return applied;
         }
 
-        // ============================================================
-        // MANUAL healing (Heal key): spends one full bar per press, instantly.
-        // the HP dessa bar are entregues to the PlayerHealth to the taxa healthRecoveryRate.
-        // ============================================================
-        /// <summary>
-        /// Attempts to start heal.
-        /// </summary>
         public bool TryStartHeal()
         {
             if (brain == null || !brain.IsAlive) return false;
@@ -437,9 +362,8 @@ namespace MolimoByLulucaGameDev
                 if (layers[i] >= energyPerLayer - Epsilon) { index = i; break; }
             }
 
-            if (index < 0) return false; // without bar full: without healing free.
+            if (index < 0) return false;
 
-            // the bar desaparece of imediato.
             layers[index] = 0f;
             pendingHealHP += energyPerLayer * healthPerEnergy;
             RaiseHealReserveChanged();
@@ -453,9 +377,6 @@ namespace MolimoByLulucaGameDev
             return true;
         }
 
-        /// <summary>
-        /// Performs the stop heal operation.
-        /// </summary>
         public void StopHeal()
         {
             pendingHealHP = 0f;
@@ -491,12 +412,6 @@ namespace MolimoByLulucaGameDev
             OnHealReserveChanged?.Invoke(CurrentHealEnergy, MaxHealEnergy);
         }
 
-        // ============================================================
-        // STAMINA / RAGE
-        // ============================================================
-        /// <summary>
-        /// Performs the consume stamina operation.
-        /// </summary>
         public void ConsumeStamina(float amount)
         {
             currentStamina = Mathf.Max(0f, currentStamina - amount);
@@ -504,9 +419,6 @@ namespace MolimoByLulucaGameDev
             OnStaminaChanged?.Invoke(currentStamina, maxStamina);
         }
 
-        /// <summary>
-        /// Performs the regenerate stamina operation.
-        /// </summary>
         public void RegenerateStamina(float amount)
         {
             currentStamina = Mathf.Min(maxStamina, currentStamina + amount);
@@ -537,17 +449,11 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        /// <summary>
-        /// Performs the add rage operation.
-        /// </summary>
         public void AddRage(float amount)
         {
             currentRage = Mathf.Clamp(currentRage + amount, 0f, maxRage);
         }
 
-        /// <summary>
-        /// Performs the consume rage operation.
-        /// </summary>
         public void ConsumeRage(float amount)
         {
             currentRage = Mathf.Clamp(currentRage - amount, 0f, maxRage);

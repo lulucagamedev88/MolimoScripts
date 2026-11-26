@@ -4,16 +4,11 @@ using UnityEngine;
 namespace MolimoByLulucaGameDev
 {
     [DisallowMultipleComponent]
-    /// <summary>
-    /// Provides the molimo collectable hp component.
-    /// </summary>
+
     public class MolimoCollectableHP : MonoBehaviour
     {
         #region Enums
 
-        /// <summary>
-        /// Defines the available oscillation mode values.
-        /// </summary>
         public enum OscillationMode
         {
             None,
@@ -21,9 +16,6 @@ namespace MolimoByLulucaGameDev
             RandomFloat
         }
 
-        /// <summary>
-        /// Defines the available item state values.
-        /// </summary>
         public enum ItemState
         {
             Idle,
@@ -64,9 +56,6 @@ namespace MolimoByLulucaGameDev
 
         #region Public Properties
 
-        /// <summary>
-        /// Gets or sets the state value.
-        /// </summary>
         public ItemState State { get; private set; } = ItemState.Idle;
         public int HealCharge => healCharge;
         public bool IsAttracted => State == ItemState.Attracted;
@@ -115,9 +104,6 @@ namespace MolimoByLulucaGameDev
 
         #region Public API
 
-        /// <summary>
-        /// Performs the attract to operation.
-        /// </summary>
         public void AttractTo(Transform target, float speed = -1f)
         {
             if (State != ItemState.Idle) return;
@@ -263,9 +249,7 @@ namespace MolimoByLulucaGameDev
 
     internal class AudioSourceAutoCleaner : MonoBehaviour
     {
-        /// <summary>
-        /// Performs the fade and destroy operation.
-        /// </summary>
+
         public void FadeAndDestroy(AudioSource source, float duration)
         {
             StartCoroutine(FadeRoutine(source, duration));

@@ -2,14 +2,12 @@ using UnityEngine;
 
 namespace MolimoByRodrigoLuluca
 {
-    /// <summary>
-    /// Provides the camera renderer switcher component.
-    /// </summary>
+
     public class CameraRendererSwitcher : MonoBehaviour
     {
         [Header("references")]
         [SerializeField] private Silhouette silhouetteScript;
-        [SerializeField] private Camera silhouetteCamera; // Camera_Silhouette
+        [SerializeField] private Camera silhouetteCamera;
 
         [Header("Delay")]
         [SerializeField] private float deactivationDelay = 0.2f;

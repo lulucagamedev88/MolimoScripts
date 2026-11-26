@@ -4,15 +4,11 @@ using UnityEngine.SceneManagement;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Defines the available weather state values.
-    /// </summary>
+
     public enum WeatherState { Desligado, cold, QuenteSeco, rainy }
 
     [System.Serializable]
-    /// <summary>
-    /// Represents particle disable entry data.
-    /// </summary>
+
     public struct ParticleDisableEntry
     {
         [Tooltip("ParticleSystem the silenciar during the rain.")]
@@ -23,9 +19,7 @@ namespace MolimoByLulucaGameDev
 
     [ExecuteAlways]
     [DisallowMultipleComponent]
-    /// <summary>
-    /// Provides the weather controller component.
-    /// </summary>
+
     public class WeatherController : MonoBehaviour
     {
         [Header("state of the Clima (Interruptor primary)")]
@@ -417,45 +411,24 @@ namespace MolimoByLulucaGameDev
 
         private WeatherState _lastWeather = (WeatherState)(-1);
 
-        /// <summary>
-        /// Performs the toggle weather operation.
-        /// </summary>
         public void ToggleWeather() => SetWeatherEnabled(!weatherEnabled);
-        /// <summary>
-        /// Sets weather enabled.
-        /// </summary>
+
         public void SetWeatherEnabled(bool v) { weatherEnabled = v; }
-        /// <summary>
-        /// Sets weather by index.
-        /// </summary>
+
         public void SetWeatherByIndex(int idx) => SetWeather((WeatherState)idx);
-        /// <summary>
-        /// Sets weather.
-        /// </summary>
+
         public void SetWeather(WeatherState w) { currentWeather = w; }
-        /// <summary>
-        /// Sets cold weather.
-        /// </summary>
+
         public void SetColdWeather() => SetWeather(WeatherState.cold);
-        /// <summary>
-        /// Sets hot dry weather.
-        /// </summary>
+
         public void SetHotDryWeather() => SetWeather(WeatherState.QuenteSeco);
-        /// <summary>
-        /// Sets rainy weather.
-        /// </summary>
+
         public void SetRainyWeather() => SetWeather(WeatherState.rainy);
-        /// <summary>
-        /// Sets weather off.
-        /// </summary>
+
         public void SetWeatherOff() => SetWeather(WeatherState.Desligado);
-        /// <summary>
-        /// Sets camera reference.
-        /// </summary>
+
         public void SetCameraReference(Transform cam) => cameraReference = cam;
-        /// <summary>
-        /// Performs the trigger thunder strike operation.
-        /// </summary>
+
         public void TriggerThunderStrike()
         {
             _flashTimer = flashDuration;

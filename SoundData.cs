@@ -4,9 +4,7 @@ using UnityEngine.Audio;
 namespace MolimoByLulucaGameDev
 {
     [CreateAssetMenu(fileName = "NewSound", menuName = "Molimo/Sound Data")]
-    /// <summary>
-    /// Provides the sound data component.
-    /// </summary>
+
     public class SoundData : ScriptableObject
     {
         [Header("identification")]
@@ -43,18 +41,10 @@ namespace MolimoByLulucaGameDev
         public float descendLowPassStart = 18000f;
         public float descendLowPassEnd = 450f;
 
-        /// <summary>
-        /// Returns clip.
-        /// </summary>
         public AudioClip GetClip() => clip;
-        /// <summary>
-        /// Returns volume.
-        /// </summary>
+
         public float GetVolume() => volume;
 
-        /// <summary>
-        /// Returns pitch.
-        /// </summary>
         public float GetPitch()
         {
             float p = pitch + Random.Range(-pitchRandomness, pitchRandomness);

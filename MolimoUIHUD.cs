@@ -4,13 +4,7 @@ using UnityEngine.UI;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// HUD do Molimo AI que exibe a quantidade atual de HP armazenado na cesta.
-    /// Escuta o evento estático MolimoHealthContainer.OnMolimoHPChanged e
-    /// atualiza o texto/ícone sem estar acoplado ao MolimoAI.
-    ///
-    /// Pulsação do ícone preserva a escala original configurada no Rect Transform.
-    /// </summary>
+
     [DisallowMultipleComponent]
     public class MolimoUIHUD : MonoBehaviour
     {
@@ -60,7 +54,7 @@ namespace MolimoByLulucaGameDev
         private int _currentHP;
         private int _maxHP = 10;
 
-        private Vector3 _originalIconScale = Vector3.one;   // scale original of the icon
+        private Vector3 _originalIconScale = Vector3.one;
         private bool _hasCapturedIconScale = false;
 
         private bool _isPulsing;
@@ -76,7 +70,7 @@ namespace MolimoByLulucaGameDev
 
         private void Awake()
         {
-            // Captura the scale original of the icon before any pulse.
+
             CaptureOriginalIconScale();
         }
 
@@ -84,7 +78,6 @@ namespace MolimoByLulucaGameDev
         {
             MolimoHealthContainer.OnMolimoHPChanged += HandleHPChanged;
 
-            // ensures that the scale is the correta when the enable.
             RestoreIconScale();
 
             SyncWithContainer();
@@ -94,7 +87,6 @@ namespace MolimoByLulucaGameDev
         {
             MolimoHealthContainer.OnMolimoHPChanged -= HandleHPChanged;
 
-            // ensures state consistente when the disable.
             RestoreIconScale();
         }
 
@@ -150,7 +142,6 @@ namespace MolimoByLulucaGameDev
         {
             if (hpCounterText == null) return;
 
-            // Formato "D2" = always 2 digits: 00, 01, ..., 10.
             hpCounterText.text = _currentHP.ToString("D2");
         }
 
@@ -166,10 +157,6 @@ namespace MolimoByLulucaGameDev
 
         #region Icon Scale Management
 
-        /// <summary>
-        /// Captura a escala original do ícone no Rect Transform.
-        /// Só captura uma vez, para não perder a referência entre ativações.
-        /// </summary>
         private void CaptureOriginalIconScale()
         {
             if (_hasCapturedIconScale) return;
@@ -181,7 +168,6 @@ namespace MolimoByLulucaGameDev
             Log($"scale original of the icon captured: {_originalIconScale}");
         }
 
-        /// <summary>returns the ícone à scale original (chamado in vários pontos).</summary>
         private void RestoreIconScale()
         {
             if (hpIcon == null || !_hasCapturedIconScale) return;
@@ -198,7 +184,6 @@ namespace MolimoByLulucaGameDev
         {
             if (hpIcon == null) return;
 
-            // Captura the scale caso still not tenha sido (safe fallback).
             if (!_hasCapturedIconScale) CaptureOriginalIconScale();
             if (!_hasCapturedIconScale) return;
 
@@ -213,18 +198,15 @@ namespace MolimoByLulucaGameDev
             _pulseTimer += Time.deltaTime;
             float t = Mathf.Clamp01(_pulseTimer / pulseDuration);
 
-            // Curva triangular: 0 → 1 → 0.
-            // No pico (t = 0.5) multiplica by pulseScale; nas pontas, 1.
             float triangle = 1f - Mathf.Abs(t * 2f - 1f);
             float factor = 1f + (pulseScale - 1f) * triangle;
 
-            // applies always the partir of the scale original — never of Vector3.one.
             hpIcon.transform.localScale = _originalIconScale * factor;
 
             if (t >= 1f)
             {
                 _isPulsing = false;
-                hpIcon.transform.localScale = _originalIconScale;   // returns when the default exact
+                hpIcon.transform.localScale = _originalIconScale;
             }
         }
 

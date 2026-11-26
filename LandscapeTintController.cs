@@ -1,20 +1,10 @@
-// -----------------------------------------------------------------------------
-//  LandscapeTintController.cs
-//  MolimoByLulucaGameDev
-//
-//  Sincroniza Sprites of landscape (fundo 2.5D) with the light ambient global
-//  that the DayNightLightingController writes in RenderSettings.ambientLight.
-//  reacts automatically the: day/Tarde/night + hot/cold/rainy.
-// -----------------------------------------------------------------------------
 using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
     [ExecuteAlways]
     [DisallowMultipleComponent]
-    /// <summary>
-    /// Provides the landscape tint controller component.
-    /// </summary>
+
     public class LandscapeTintController : MonoBehaviour
     {
         [Header("targets (Sprites of the Landscape)")]
@@ -85,26 +75,21 @@ namespace MolimoByLulucaGameDev
         {
             float lum = Mathf.Max(ambient.grayscale, 0.0001f);
 
-            // 1) Curva of response controla the brightness final
             float brightness = Mathf.Clamp(
                 responseCurve.Evaluate(lum) * tintMultiplier,
                 minBrightness, maxBrightness);
 
-            // 2) preserves the matiz of the ambient but controla the brightness
             Color huePreserved = ambient * (brightness / lum);
 
-            // 3) color base
             Color tint = new Color(
                 huePreserved.r * baseTint.r,
                 huePreserved.g * baseTint.g,
                 huePreserved.b * baseTint.b,
                 1f);
 
-            // 4) Perspectiva atmospheric (empurra is the color of "fog")
             if (atmosphericFade > 0.0001f)
                 tint = Color.Lerp(tint, atmosphericColor * brightness, atmosphericFade);
 
-            // 5) Realce optional of the sol (set-of the-sol more hot)
             if (blendSunColor && _dayNight != null && _dayNight.GlobalToonLight != null)
             {
                 Color sunCol = _dayNight.GlobalToonLight.color;

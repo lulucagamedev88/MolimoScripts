@@ -3,15 +3,7 @@ using UnityEngine.UI;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Controla a barra de vida (Canvas UI) do EnemySpiderAI.
-    ///
-    /// Subscreve aos eventos do <see cref="EnemySpiderAI"/>:
-    ///   - OnHealthChanged(current, max) → atualiza o fill da imagem
-    ///   - OnDeath                        → esconde a UI
-    ///
-    /// FIX: substituído EnemySpider → EnemySpiderAI (o antigo foi eliminado).
-    /// </summary>
+
     public class EnemySpiderHealthUIController : MonoBehaviour
     {
         [Header("references of the UI")]
@@ -33,7 +25,6 @@ namespace MolimoByLulucaGameDev
 
         private Camera mainCamera;
 
-        // ============================================================
         private void Awake()
         {
             if (enemy == null)
@@ -61,8 +52,6 @@ namespace MolimoByLulucaGameDev
             enemy.OnHealthChanged += UpdateHealthBar;
             enemy.OnDeath += HandleEnemyDeath;
 
-            // state initial — useful if the spider already has levado damage before
-            // of the UI be ativada (ex.: pool/instantiation).
             UpdateHealthBar(enemy.CurrentHealth, enemy.MaxHealth);
         }
 
@@ -82,7 +71,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // ============================================================
         private void UpdateHealthBar(float currentHealth, float maxHealth)
         {
             float fillAmount = maxHealth > 0f

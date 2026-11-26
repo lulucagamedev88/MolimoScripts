@@ -6,9 +6,7 @@ namespace MolimoByLulucaGameDev
         fileName = "NewLootItem",
         menuName = "Molimo/Loot/Loot Item"
     )]
-    /// <summary>
-    /// Provides the loot item component.
-    /// </summary>
+
     public class LootItem : ScriptableObject
     {
         [Header("Item Information")]

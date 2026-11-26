@@ -3,13 +3,7 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Apresenta no HUD (TextMeshPro) apenas a energia atual do Molimo como número inteiro.
-    /// Ex.: "0", "1", "3", "5".
-    ///
-    /// Atualiza-se exclusivamente através do evento estático
-    /// <see cref="MolimoHealthContainer.OnMolimoHPChanged"/>, sem qualquer polling em Update().
-    /// </summary>
+
     [DisallowMultipleComponent]
     public class MolimoEnergyCounterUI : MonoBehaviour
     {
@@ -34,7 +28,7 @@ namespace MolimoByLulucaGameDev
 
         private void Awake()
         {
-            // Tenta resolver a referência ao TMP caso tenha sido esquecida.
+
             if (energyText == null)
                 energyText = GetComponent<TMP_Text>();
 
@@ -43,23 +37,21 @@ namespace MolimoByLulucaGameDev
 
         private void OnEnable()
         {
-            // Garante que a referência existe antes de subscrever.
+
             ResolveContainerIfNeeded();
 
-            // Subscreve o evento estático existente (sem alterar o MolimoHealthContainer).
             if (!_subscribed)
             {
                 MolimoHealthContainer.OnMolimoHPChanged += HandleHPChanged;
                 _subscribed = true;
             }
 
-            // Atualização imediata com o estado real (sem esperar pela primeira recolha).
             RefreshNow();
         }
 
         private void OnDisable()
         {
-            // Remove a subscrição para evitar duplicações e leaks.
+
             if (_subscribed)
             {
                 MolimoHealthContainer.OnMolimoHPChanged -= HandleHPChanged;
@@ -76,9 +68,6 @@ namespace MolimoByLulucaGameDev
             UpdateText(current);
         }
 
-        /// <summary>
-        /// Força uma leitura imediata do estado real do container (sem polling contínuo).
-        /// </summary>
         private void RefreshNow()
         {
             if (healthContainer != null)
@@ -87,7 +76,7 @@ namespace MolimoByLulucaGameDev
             }
             else
             {
-                // Sem container ainda; mostra "0" como salvaguarda até que exista.
+
                 UpdateText(0);
             }
         }
@@ -106,7 +95,6 @@ namespace MolimoByLulucaGameDev
         {
             if (healthContainer != null) return;
 
-            // Pesquisa única (não repetida por frame) — só executa se a referência estiver vazia.
             healthContainer = FindFirstObjectByType<MolimoHealthContainer>();
         }
 

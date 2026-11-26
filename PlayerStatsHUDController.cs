@@ -3,17 +3,10 @@ using UnityEngine.UI;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// HUD do jogador: barras de Vida, Stamina, Heal (por camadas) e Container do Molimo.
-    /// Adaptado ao PlayerHealth.cs do Molimo 3D (via PlayerBrain).
-    /// Arquitectura event-driven: escuta PlayerHealth.OnHealthChanged / OnStaminaChanged / OnHealReserveChanged,
-    /// guarda o valor-alvo e suaviza a animação da barra no Update.
-    /// </summary>
+
     public class PlayerStatsHUDController : MonoBehaviour
     {
-        // ============================================================
-        // references
-        // ============================================================
+
         [Header("reference of the player")]
         [Tooltip("leave empty is localizar the Health of the object with the tag Player.")]
         [SerializeField] private PlayerHealth health;
@@ -22,9 +15,6 @@ namespace MolimoByLulucaGameDev
         [Tooltip("leave empty is localizar the MolimoHealthContainer in the scene.")]
         [SerializeField] private MolimoHealthContainer healthContainer;
 
-        // ============================================================
-        // BARRAS
-        // ============================================================
         [Header("Barras")]
         [SerializeField] private Image healthFillImage;
         [SerializeField] private Image staminaFillImage;
@@ -36,9 +26,6 @@ namespace MolimoByLulucaGameDev
         [Tooltip("bar of the Container of Molimo (Filled).")]
         [SerializeField] private Image containerFillImage;
 
-        // ============================================================
-        // animation of the BARRAS
-        // ============================================================
         [Header("animation of the Barras")]
         [Tooltip("speed of fill/esvaziamento (0–1 per second). Ex: 2 = 50% per second.")]
         [SerializeField, Min(0f)] private float barChangeSpeed = 2f;
@@ -46,37 +33,23 @@ namespace MolimoByLulucaGameDev
         [Tooltip("if checked, the drain (loss) is instant — only the regeneration is suave.")]
         [SerializeField] private bool instantDrain = true;
 
-        // ============================================================
-        // alerts of health
-        // ============================================================
         [Header("alerts of health")]
         [Tooltip("Activa the logs of alerta in the console when the health baixa.")]
         [SerializeField] private bool enableHealthAlerts = true;
 
-        // Thresholds in value absoluto of HP (not percentage),
-        // is facilitar ajuste directo in the Inspector.
         [SerializeField] private float alertThreshold = 30f;
         [SerializeField] private float criticalThreshold = 25f;
         [SerializeField] private float severThreshold = 10f;
         [SerializeField] private float terminalThreshold = 5f;
 
-        // level of alerta current (prevents repetir the same message).
         private enum HealthAlertLevel { None, Alert, Critical, Severe, Terminal, Dead }
         private HealthAlertLevel currentAlertLevel = HealthAlertLevel.None;
 
-        // ============================================================
-        // state internal
-        // ============================================================
-
-        // values-target (actualizados by eventos; suavizados in the Update).
         private float targetHealth = 1f;
         private float targetStamina = 1f;
         private float[] targetHealLayers;
         private float targetContainer;
 
-        // ============================================================
-        // UNITY LIFECYCLE
-        // ============================================================
         private void Awake()
         {
             if (health == null) health = FindPlayerHealth();
@@ -116,18 +89,16 @@ namespace MolimoByLulucaGameDev
             if (staminaFillImage != null)
                 staminaFillImage.fillAmount = Smooth(staminaFillImage.fillAmount, targetStamina);
 
-            // layers of the Heal
             if (healLayerFillImages != null)
             {
                 for (int i = 0; i < healLayerFillImages.Length; i++)
                 {
                     Image img = healLayerFillImages[i];
                     if (img == null) continue;
-                    img.fillAmount = targetHealLayers[i]; // bar inteira: 0 or 1, without smoothing
+                    img.fillAmount = targetHealLayers[i];
                 }
             }
 
-            // Container: reads the energy exact (with fraction) is the bar descend/rise of forma continuous.
             if (containerFillImage != null && healthContainer != null)
             {
                 targetContainer = ContainerNormalized();
@@ -135,9 +106,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // ============================================================
-        // HANDLERS of EVENTOS
-        // ============================================================
         private void HandleHealthChanged(float current, float max)
         {
             targetHealth = max > 0f ? Mathf.Clamp01(current / max) : 0f;
@@ -159,7 +127,7 @@ namespace MolimoByLulucaGameDev
             int fullLayerCount = Mathf.Min(health.FullHealLayers, targetHealLayers.Length);
             for (int i = 0; i < targetHealLayers.Length; i++)
             {
-                // the layers visuals are compactadas desde the elemento 0 of the Inspector.
+
                 targetHealLayers[i] = i < fullLayerCount ? 1f : 0f;
             }
         }
@@ -170,9 +138,6 @@ namespace MolimoByLulucaGameDev
             return Mathf.Clamp01(healthContainer.ExactEnergy / healthContainer.MaxHP);
         }
 
-        // ============================================================
-        // system of alerts
-        // ============================================================
         private void EvaluateHealthAlert(float current)
         {
             HealthAlertLevel newLevel;
@@ -190,20 +155,14 @@ namespace MolimoByLulucaGameDev
             else
                 newLevel = HealthAlertLevel.None;
 
-            // if the health recuperou above of all the thresholds, resetamos.
             if (newLevel == HealthAlertLevel.None)
             {
                 currentAlertLevel = HealthAlertLevel.None;
                 return;
             }
 
-            // if not piorou, nothing the of the.
             if (newLevel <= currentAlertLevel) return;
 
-            // Disparar all the levels saltados, of the more suave is the more grave.
-            // example: HP vai of 40 → 25 num single hit of 15.
-            // currentAlertLevel = None, newLevel = Critical.
-            // Dispara: Alert (30) → Critical (25), in sequence.
             for (HealthAlertLevel level = currentAlertLevel + 1; level <= newLevel; level++)
                 FireAlert(level, current);
 
@@ -231,12 +190,9 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // ============================================================
-        // smoothing
-        // ============================================================
         private float Smooth(float current, float target)
         {
-            if (instantDrain && target < current) return target; // drain imediato
+            if (instantDrain && target < current) return target;
             return Mathf.MoveTowards(current, target, barChangeSpeed * Time.deltaTime);
         }
 
@@ -253,10 +209,6 @@ namespace MolimoByLulucaGameDev
             return FindAnyObjectByType<PlayerHealth>();
         }
 
-        /// <summary>force the barras for the value current (usage no loading of the scene).</summary>
-        /// <summary>
-        /// Performs the snap bars operation.
-        /// </summary>
         public void SnapBars()
         {
             if (health == null) return;

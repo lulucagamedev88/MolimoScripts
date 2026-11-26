@@ -5,9 +5,7 @@ using UnityEngine;
 namespace MolimoByLulucaGameDev
 {
     [RequireComponent(typeof(LootDropper))]
-    /// <summary>
-    /// Provides the breakable box component.
-    /// </summary>
+
     public class BreakableBox : MonoBehaviour, IDamageable
     {
         [Header("health / Durabilidade")]
@@ -40,7 +38,6 @@ namespace MolimoByLulucaGameDev
         [Header("Debug")]
         [SerializeField] private bool debugLogs = true;
 
-        // Audio 3D — values usados in all the one-shots
         private const float SfxMinDistance = 1f;
         private const float SfxMaxDistance = 20f;
 
@@ -48,10 +45,6 @@ namespace MolimoByLulucaGameDev
         private bool _isBroken;
         private Collider _boxCollider;
         private LootDropper _lootDropper;
-
-        // =============================================================
-        // IDamageable / Ciclo of health
-        // =============================================================
 
         public float CurrentHealth => _currentHealth;
         public float MaxHealth => maxHealth;
@@ -73,26 +66,15 @@ namespace MolimoByLulucaGameDev
                 impulseSource = GetComponent<CinemachineImpulseSource>();
         }
 
-        // implementation explicit is not colidir with the overloads public
         void IDamageable.TakeDamage(float amount, float knockbackDistance)
         {
-            // Knockback ignored — the box parte in the place; the fragmentos is that voam.
+
             TakeDamage(amount, transform.position);
         }
 
-        // =============================================================
-        // API of damage
-        // =============================================================
-
-        /// <summary>
-        /// Performs the take damage operation.
-        /// </summary>
         public void TakeDamage(float damageAmount)
             => TakeDamage(damageAmount, transform.position);
 
-        /// <summary>
-        /// Performs the take damage operation.
-        /// </summary>
         public void TakeDamage(float damageAmount, Vector3 impactPoint)
         {
             if (_isBroken) return;
@@ -109,7 +91,7 @@ namespace MolimoByLulucaGameDev
 
             if (_currentHealth <= 0f)
             {
-                // hit fatal → only the sound of quebra (prevents impact + quebra in simultaneous)
+
                 BreakBox(impactPoint);
             }
             else
@@ -117,10 +99,6 @@ namespace MolimoByLulucaGameDev
                 PlayRandomSound(impactSoundDataList, impactPoint);
             }
         }
-
-        // =============================================================
-        // Quebra
-        // =============================================================
 
         private void BreakBox(Vector3 impactPoint)
         {
@@ -147,10 +125,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // =============================================================
-        // audio — helpers unificados
-        // =============================================================
-
         private void PlayRandomSound(SoundData[] list, Vector3 position)
         {
             SoundData soundData = PickValidSoundData(list);
@@ -159,10 +133,6 @@ namespace MolimoByLulucaGameDev
             SpawnOneShot(soundData, position);
         }
 
-        /// <summary>
-        /// Escolhe um SoundData válido (não-null e com clip) começando num
-        /// índice aleatório e percorrendo a lista. Devolve null se nenhum servir.
-        /// </summary>
         private static SoundData PickValidSoundData(SoundData[] list)
         {
             if (list == null || list.Length == 0) return null;
@@ -195,10 +165,6 @@ namespace MolimoByLulucaGameDev
             float pitch = Mathf.Max(0.01f, Mathf.Abs(src.pitch));
             Destroy(sfx, src.clip.length / pitch);
         }
-
-        // =============================================================
-        // Fragmentos / physics
-        // =============================================================
 
         private void ActivateFragments(Vector3 impactPoint)
         {
@@ -240,21 +206,10 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // =============================================================
-        // API Public
-        // =============================================================
-
-        /// <summary>
-        /// Performs the break operation.
-        /// </summary>
         public void Break() => BreakBox(transform.position);
-        /// <summary>
-        /// Performs the break at operation.
-        /// </summary>
+
         public void BreakAt(Vector3 impactPoint) => BreakBox(impactPoint);
-        /// <summary>
-        /// Determines whether broken.
-        /// </summary>
+
         public bool IsBroken() => _isBroken;
     }
 }

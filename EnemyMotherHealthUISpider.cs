@@ -3,14 +3,7 @@ using UnityEngine.UI;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Barra de vida (World-space Canvas) para o EnemyMotherSpider (Boss).
-    ///
-    /// Funcionalidades extra:
-    ///  - Destaque visual da barra durante o Rest (barriga exposta) —
-    ///    ajuda o Player a perceber a janela de ataque.
-    ///  - Réplica direta do EnemySpiderHealthUIController.
-    /// </summary>
+
     public class EnemyMotherHealthUISpider : MonoBehaviour
     {
         [Header("references of the UI")]
@@ -35,7 +28,6 @@ namespace MolimoByLulucaGameDev
 
         private Camera mainCamera;
 
-        // ============================================================
         private void Awake()
         {
             if (enemy == null)
@@ -58,7 +50,6 @@ namespace MolimoByLulucaGameDev
             enemy.OnHealthChanged += UpdateHealthBar;
             enemy.OnDeath += HandleEnemyDeath;
 
-            // state initial.
             UpdateHealthBar(enemy.CurrentHealth, enemy.MaxHealth);
             RefreshRestHighlight();
         }
@@ -73,7 +64,7 @@ namespace MolimoByLulucaGameDev
 
         private void Update()
         {
-            // state of the Rest changes without disparar evento → sondamos per frame.
+
             RefreshRestHighlight();
         }
 
@@ -83,7 +74,6 @@ namespace MolimoByLulucaGameDev
                 transform.rotation = mainCamera.transform.rotation;
         }
 
-        // ============================================================
         private void UpdateHealthBar(float currentHealth, float maxHealth)
         {
             if (healthFillImage == null) return;

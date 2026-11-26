@@ -2,9 +2,7 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Provides the player knockdown state behaviour component.
-    /// </summary>
+
     public class PlayerKnockdownStateBehaviour : StateMachineBehaviour
     {
         override public void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)

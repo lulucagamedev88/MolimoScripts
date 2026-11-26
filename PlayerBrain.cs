@@ -3,14 +3,10 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Provides the player brain component.
-    /// </summary>
+
     public class PlayerBrain : MonoBehaviour
     {
-        // ============================================================
-        // PLAYER SYSTEMS
-        // ============================================================
+
         [Header("Player Systems")]
         [SerializeField] private PlayerMovement movementState;
         [SerializeField] private PlayerCombat combatState;
@@ -21,15 +17,9 @@ namespace MolimoByLulucaGameDev
         [Tooltip("service central of detection of surface (ground/roof).")]
         [SerializeField] private PlayerSurfaceProbe surfaceProbe;
 
-        // ============================================================
-        // COMBAT STATE
-        // ============================================================
         [Header("Combat State")]
         [SerializeField] private bool isInCombat = false;
 
-        // ============================================================
-        // BRAIN STATUS
-        // ============================================================
         [Header("Brain Status")]
         [SerializeField] private bool isAlive = true;
         [SerializeField] private bool isKnockedDown = false;
@@ -44,9 +34,6 @@ namespace MolimoByLulucaGameDev
         [SerializeField] private int knockdownVariantCount = 2;
         private int lastKnockdownVariant = 0;
 
-        // ============================================================
-        // WAKE UP (Prologue handoff)
-        // ============================================================
         [Header("Wake Up (Prologue)")]
         [Tooltip("duration of the sequence of wake (seconds). " +
                  "during this time the MovementState remains totalmente inativo.")]
@@ -74,26 +61,16 @@ namespace MolimoByLulucaGameDev
         private bool hasSleepParameter = false;
         private bool hasWakeParameter = false;
 
-        /// <summary>
-        /// Gate principal: enquanto falso, o MovementState NÃO é ativado,
-        /// NÃO faz Tick/PhysicsTick, e NÃO pode ser desbloqueado.
-        /// </summary>
         private bool _isAwakened = true;
 
         private bool isWakingUp = false;
 
-        // ============================================================
-        // MOVEMENT LOCK
-        // ============================================================
         [Header("Movement Lock")]
         [SerializeField] private float reviveLockDuration = 1f;
 
         private bool isMovementLocked = false;
         private float movementLockTimer = 0f;
 
-        // ============================================================
-        // INTERNAL REFERENCES
-        // ============================================================
         private Rigidbody playerRigidbody;
 
         private int deathTriggerHash;
@@ -102,9 +79,6 @@ namespace MolimoByLulucaGameDev
 
         private bool hasKnockdownParameter = false;
 
-        // ============================================================
-        // PUBLIC PROPERTIES
-        // ============================================================
         public bool IsAlive => isAlive;
         public bool IsInCombat => isInCombat;
         public bool IsKnockedDown => isKnockedDown;
@@ -117,7 +91,6 @@ namespace MolimoByLulucaGameDev
         public bool IsWakingUp => isWakingUp;
         public bool IsAwakened => _isAwakened;
 
-        // Atalhos of surface — consultam the PlayerSurfaceProbe
         public PlayerSurfaceProbe PlayerSurfaceProbe => surfaceProbe;
         public bool IsOnRoof => surfaceProbe != null && surfaceProbe.IsOnRoof;
         public bool IsOnGround => surfaceProbe != null && surfaceProbe.IsOnGround;
@@ -130,9 +103,6 @@ namespace MolimoByLulucaGameDev
         public float currentRage => (healthState != null ? healthState.CurrentRage : 0f);
         public float maxRage => (healthState != null ? healthState.MaxRage : 100f);
 
-        // ============================================================
-        // UNITY LIFECYCLE
-        // ============================================================
         private void Awake()
         {
             playerRigidbody = GetComponent<Rigidbody>();
@@ -154,7 +124,6 @@ namespace MolimoByLulucaGameDev
             sleepParameterHash = Animator.StringToHash("Sleep");
             wakeParameterHash = Animator.StringToHash("Wake");
 
-            // Gate initial. normally true (fluxo normal of jogo).
             _isAwakened = !startAsleep;
 
             ValidateKnockdownParameter();
@@ -204,7 +173,6 @@ namespace MolimoByLulucaGameDev
         {
             InitializePlayerSystems();
 
-            // only enables systems if already is acordado.
             if (isAlive && _isAwakened) ActivateAllSystems();
         }
 
@@ -239,7 +207,6 @@ namespace MolimoByLulucaGameDev
 
             if (!isAlive) return;
 
-            // GATE: while not is acordado, the MovementState not does Tick.
             if (_isAwakened && movementState != null && movementState.IsActive)
                 movementState.TickMovement();
 
@@ -250,8 +217,6 @@ namespace MolimoByLulucaGameDev
         {
             if (!isAlive) return;
 
-            // during Sleep → Wake → Idle the Player remains "stuck" in the place.
-            // any speed horizontal residual is anulada — not arrasta.
             if (isWakingUp && playerRigidbody != null && !playerRigidbody.isKinematic)
             {
                 Vector3 v = playerRigidbody.linearVelocity;
@@ -260,7 +225,6 @@ namespace MolimoByLulucaGameDev
                 playerRigidbody.linearVelocity = v;
             }
 
-            // GATE: while not is acordado, the MovementState not does PhysicsTick.
             if (_isAwakened && movementState != null && movementState.IsActive)
                 movementState.TickPhysics();
 
@@ -278,21 +242,15 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        /// <summary>
-        /// Performs the activate all systems operation.
-        /// </summary>
         public void ActivateAllSystems()
         {
-            // GATE: while not is acordado, not ativamos the MovementState.
+
             if (!_isAwakened) return;
 
             if (movementState != null && movementState.IsInitialized)
                 movementState.SetActive(true);
         }
 
-        /// <summary>
-        /// Performs the deactivate all systems operation.
-        /// </summary>
         public void DeactivateAllSystems()
         {
             if (movementState != null) movementState.SetActive(false);
@@ -320,12 +278,6 @@ namespace MolimoByLulucaGameDev
                 SetMovementInputLocked(false);
         }
 
-        // ============================================================
-        // WAKE UP (Prologue handoff)
-        // ============================================================
-        /// <summary>
-        /// Performs the prepare wake up handoff operation.
-        /// </summary>
         public void PrepareWakeUpHandoff()
         {
             _isAwakened = false;
@@ -340,9 +292,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        /// <summary>
-        /// Performs the begin wake up sequence operation.
-        /// </summary>
         public void BeginWakeUpSequence()
         {
             if (isWakingUp) return;
@@ -350,14 +299,11 @@ namespace MolimoByLulucaGameDev
 
             isWakingUp = true;
 
-            // ensures that estamos in the state "adormecido" same that Prepare not has sido called.
             _isAwakened = false;
             if (movementState != null) movementState.SetActive(false);
 
-            // Bloqueia input imediatamente.
             SetMovementInputLocked(true);
 
-            // Coloca the Animator in state of sono.
             if (animator != null)
             {
                 if (hasSleepParameter) animator.SetBool(sleepParameterHash, true);
@@ -369,28 +315,24 @@ namespace MolimoByLulucaGameDev
 
         private IEnumerator WakeUpRoutine()
         {
-            // 1) Dormindo by wakeUpDuration seconds.
+
             yield return new WaitForSeconds(wakeUpDuration);
 
-            // 2) Dispara Wake in the Animator.
             if (animator != null)
             {
                 if (hasSleepParameter) animator.SetBool(sleepParameterHash, false);
                 if (hasWakeParameter) animator.SetBool(wakeParameterHash, true);
             }
 
-            // 3) waits the Animator chegar when the state Idle (end of the animation of Wake).
             yield return WaitForIdleState();
 
             isWakingUp = false;
 
-            // 4) opens the gate and enables the MovementState.
             _isAwakened = true;
 
             if (movementState != null && movementState.IsInitialized)
                 movementState.SetActive(true);
 
-            // 5) Libera the input (only does effect after of the gate open).
             if (unlockMovementAfterWake)
             {
                 SetMovementInputLocked(false);
@@ -401,7 +343,6 @@ namespace MolimoByLulucaGameDev
         {
             if (animator == null) yield break;
 
-            // Deixa the Animator process the trigger of the Wake.
             yield return null;
 
             int idleHash = Animator.StringToHash(wakeIdleStateName);
@@ -419,9 +360,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // ============================================================
-        // KNOCKDOWN LOGIC
-        // ============================================================
         private int RollKnockdownVariant()
         {
             if (knockdownVariantCount <= 1)
@@ -441,9 +379,6 @@ namespace MolimoByLulucaGameDev
             return variant;
         }
 
-        /// <summary>
-        /// Performs the trigger knockdown operation.
-        /// </summary>
         public void TriggerKnockdown()
         {
             if (!isAlive || isKnockedDown) return;
@@ -463,9 +398,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        /// <summary>
-        /// Performs the end knockdown operation.
-        /// </summary>
         public void EndKnockdown()
         {
             if (!isKnockedDown) return;
@@ -485,12 +417,6 @@ namespace MolimoByLulucaGameDev
             SetMovementInputLocked(false);
         }
 
-        // ============================================================
-        // DEATH & REVIVE
-        // ============================================================
-        /// <summary>
-        /// Performs the die operation.
-        /// </summary>
         public void Die()
         {
             if (!isAlive) return;
@@ -522,9 +448,6 @@ namespace MolimoByLulucaGameDev
             if (animator != null) animator.SetTrigger(deathTriggerHash);
         }
 
-        /// <summary>
-        /// Performs the revive operation.
-        /// </summary>
         public void Revive()
         {
             if (isAlive) return;
@@ -551,9 +474,6 @@ namespace MolimoByLulucaGameDev
             if (_isAwakened) ActivateAllSystems();
         }
 
-        /// <summary>
-        /// Performs the revive at operation.
-        /// </summary>
         public void ReviveAt(Vector3 position, Quaternion rotation)
         {
             if (isAlive) return;
@@ -582,115 +502,69 @@ namespace MolimoByLulucaGameDev
             if (_isAwakened) ActivateAllSystems();
         }
 
-        // ============================================================
-        // UTILITY METHODS
-        // ============================================================
-        /// <summary>
-        /// Handles weapon equipped events.
-        /// </summary>
         public void OnWeaponEquipped()
         {
             isInCombat = true;
             if (combatState != null) combatState.SetHasWeapon(true);
         }
 
-        /// <summary>
-        /// Handles weapon unequipped events.
-        /// </summary>
         public void OnWeaponUnequipped()
         {
             isInCombat = false;
             if (combatState != null) combatState.SetHasWeapon(false);
         }
 
-        /// <summary>
-        /// Handles shield equipped events.
-        /// </summary>
         public void OnShieldEquipped()
         {
             if (combatState != null) combatState.SetHasShield(true);
         }
 
-        /// <summary>
-        /// Handles shield unequipped events.
-        /// </summary>
         public void OnShieldUnequipped()
         {
             if (combatState != null) combatState.SetHasShield(false);
         }
 
-        /// <summary>
-        /// Sets exhausted.
-        /// </summary>
         public void SetExhausted(bool exhausted)
         {
             if (movementState != null) movementState.SetExhausted(exhausted);
         }
 
-        /// <summary>
-        /// Sets movement input locked.
-        /// </summary>
         public void SetMovementInputLocked(bool locked)
         {
-            // GATE: never unlock if still not is acordado.
+
             if (!locked && (!isAlive || isKnockedDown || isMovementLocked || isWakingUp || !_isAwakened))
                 return;
 
             if (movementState != null) movementState.SetMovementInputLocked(locked);
         }
 
-        /// <summary>
-        /// Performs the consume jump stamina operation.
-        /// </summary>
         public void ConsumeJumpStamina()
         {
             if (healthState != null) healthState.ConsumeStamina(healthState.JumpStaminaCost);
         }
 
-        /// <summary>
-        /// Performs the consume roll stamina operation.
-        /// </summary>
         public void ConsumeRollStamina()
         {
             if (healthState != null) healthState.ConsumeStamina(healthState.RollStaminaCost);
         }
 
-        /// <summary>
-        /// Performs the consume sprint stamina operation.
-        /// </summary>
         public void ConsumeSprintStamina(float deltaTime)
         {
             if (healthState != null)
                 healthState.ConsumeStamina(healthState.SprintStaminaCostPerSecond * deltaTime);
         }
 
-        /// <summary>
-        /// Performs the consume block stamina operation.
-        /// </summary>
         public void ConsumeBlockStamina()
         {
             if (healthState != null) healthState.ConsumeStamina(healthState.BlockStaminaCost);
         }
 
-        /// <summary>
-        /// Returns movement state.
-        /// </summary>
         public PlayerMovement GetMovementState() => movementState;
-        /// <summary>
-        /// Returns combat state.
-        /// </summary>
+
         public PlayerCombat GetCombatState() => combatState;
-        /// <summary>
-        /// Returns health state.
-        /// </summary>
+
         public PlayerHealth GetHealthState() => healthState;
 
-        // ============================================================
-        // RESPAWN of the ABISMO
-        // ============================================================
-        /// <summary>
-        /// Performs the respawn from abyss operation.
-        /// </summary>
         public void RespawnFromAbyss(Vector3 position, Quaternion rotation)
         {
             if (!isAlive) return;

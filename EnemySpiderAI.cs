@@ -5,14 +5,10 @@ using Unity.Cinemachine;
 namespace MolimoByLulucaGameDev
 {
     [RequireComponent(typeof(Rigidbody))]
-    /// <summary>
-    /// Provides the enemy spider ai component.
-    /// </summary>
+
     public class EnemySpiderAI : MonoBehaviour, IDamageable
     {
-        /// <summary>
-        /// Defines the available state values.
-        /// </summary>
+
         public enum State
         {
             Idle,
@@ -25,9 +21,6 @@ namespace MolimoByLulucaGameDev
             Dead
         }
 
-        /// <summary>
-        /// Defines the available rotation mode values.
-        /// </summary>
         public enum RotationMode
         {
             Locked,
@@ -122,7 +115,6 @@ namespace MolimoByLulucaGameDev
         [SerializeField] private float currentHealth = 40f;
         [SerializeField] private float staggerDuration = 0.2f;
 
-        // ===== VFX of impact =====
         [Header("VFX — Hit / Impact")]
         [Tooltip("ParticleSystem (reference) that toca whenever the spider LEVA damage. " +
                  "can be the child of the spider (follows the movement) or the system separado. " +
@@ -188,13 +180,8 @@ namespace MolimoByLulucaGameDev
         [SerializeField] private bool logAttack = false;
         [SerializeField] private bool logVfx = false;
 
-        /// <summary>
-        /// Raised when on health changed changes.
-        /// </summary>
         public event System.Action<float, float> OnHealthChanged;
-        /// <summary>
-        /// Raised when on death changes.
-        /// </summary>
+
         public event System.Action OnDeath;
 
         public float CurrentHealth => currentHealth;
@@ -202,7 +189,6 @@ namespace MolimoByLulucaGameDev
         public bool IsAlive => _state != State.Dead && currentHealth > 0f;
         public State CurrentState => _state;
 
-        // ---- API Public is Hurtbox / sword ----
         public Collider DamageCollider => damageCollider;
         public Collider BodyCollider => bodyCollider;
 
@@ -218,14 +204,11 @@ namespace MolimoByLulucaGameDev
         private float _resolvePlayerTimer;
         private bool _warnedNoPlayer;
 
-        // Knockback (be empurrado/atordoado by forces externas)
         private KnockbackReceiver _knockback;
         private bool IsKnockedBack => _knockback != null && _knockback.IsStunned;
 
-        // variables of the sound
         private float _stepSoundTimer;
 
-        // Colliders of the player already ignorados (reescaneado periodicamente is apanhar colliders novos)
         private readonly HashSet<Collider> _ignoredColliders = new HashSet<Collider>();
 
         private int _hWalk, _hWaitAttack, _hAttack, _hJump, _hDeath, _hTakeDamage, _hIsGrounded;
@@ -410,7 +393,6 @@ namespace MolimoByLulucaGameDev
 
             PlayRandomSound(attackSounds);
 
-            // Spider_Attack only in the dash (not in the jump)
             SetTrigger(_hAttack);
 
             _dashDirection = (playerTarget.position - transform.position);
@@ -510,8 +492,6 @@ namespace MolimoByLulucaGameDev
             rb.useGravity = savedGravity;
             SetBool(_hIsGrounded, true);
 
-            // Spider_Attack not is disparado in the jump attack — only the dash the enables.
-
             yield return new WaitForSeconds(0.15f);
 
             if (_state != State.JumpAttack) yield break;
@@ -600,10 +580,6 @@ namespace MolimoByLulucaGameDev
             rb.AddForce(dir * force, ForceMode.VelocityChange);
         }
 
-        // ================= IDamageable =================
-        /// <summary>
-        /// Performs the take damage operation.
-        /// </summary>
         public void TakeDamage(float amount, float knockbackDistance = -1f)
         {
             if (_isDead || _state == State.Dead || amount <= 0f) return;
@@ -612,7 +588,6 @@ namespace MolimoByLulucaGameDev
             PlayRandomSound(hitSounds);
             GenerateImpulse();
 
-            // VFX of impact the each hit (including the hit that mata — executado before Die())
             PlayHitVfx();
 
             OnHealthChanged?.Invoke(currentHealth, maxHealth);
@@ -624,16 +599,8 @@ namespace MolimoByLulucaGameDev
             if (_state != State.Stagger) EnterStagger();
         }
 
-        /// <summary>returns true if the collider informado é the hurtbox of damage (Sphere Trigger).</summary>
-        /// <summary>
-        /// Determines whether damage collider.
-        /// </summary>
         public bool IsDamageCollider(Collider c) => c != null && c == damageCollider;
 
-        /// <summary>
-        /// Aplica dano SOMENTE se o collider atingido for o damageCollider (hurtbox).
-        /// Use na espada para garantir que o body collider (física) nunca cause dano.
-        /// </summary>
         public bool TryTakeDamageFromCollider(Collider hitCollider, float amount, float knockbackDistance = -1f)
         {
             if (hitCollider == null || hitCollider != damageCollider) return false;
@@ -641,16 +608,9 @@ namespace MolimoByLulucaGameDev
             return true;
         }
 
-        /// <summary>
-        /// Dispara o(s) VFX de impacto configurados no Inspector.
-        /// Chamado a CADA hit em TakeDamage() — antes de Die(), para o hit mortal também ter VFX.
-        /// Suporta dois modos em simultâneo:
-        ///   (1) hitVfxParticle — referência in-place (Clear + Play, com reativação de segurança).
-        ///   (2) hitVfxPrefab — prefab instanciado no mundo (auto-destruído).
-        /// </summary>
         private void PlayHitVfx()
         {
-            // (1) reference direct — in-place (follows the spider if is child)
+
             if (hitVfxParticle != null)
             {
                 if (!hitVfxParticle.gameObject.activeSelf)
@@ -662,7 +622,6 @@ namespace MolimoByLulucaGameDev
                 if (logVfx) Debug.Log("[EnemySpiderAI] Hit VFX (in-place) played.");
             }
 
-            // (2) Prefab instanciado — in the world (independente of the movement)
             if (hitVfxPrefab != null)
             {
                 Vector3 worldPos = transform.TransformPoint(hitVfxSpawnOffset);
@@ -700,7 +659,6 @@ namespace MolimoByLulucaGameDev
             _isDead = true;
             _state = State.Dead;
 
-            // disable hurtbox — prevents hits in the corpse
             if (damageCollider != null) damageCollider.enabled = false;
 
             PlayDeathSound(deathSounds);
@@ -715,8 +673,6 @@ namespace MolimoByLulucaGameDev
             if (spawnDebrisOnDeath && debrisPrefab != null)
                 Instantiate(debrisPrefab, transform.position, transform.rotation);
 
-            // the hit VFX in-place (if is child) is detached before hideVisualsOnDeath
-            // is that the impact final (the that matou) termine of play.
             if (detachHitVfxOnDeath && hitVfxParticle != null && hitVfxParticle.transform.IsChildOf(transform))
             {
                 hitVfxParticle.transform.SetParent(null, true);
@@ -738,7 +694,7 @@ namespace MolimoByLulucaGameDev
                 foreach (var r in rends)
                 {
                     if (r == null) continue;
-                    // not disable ParticleSystemRenderer — otherwise the VFX in-place remains invisible.
+
                     if (r is ParticleSystemRenderer) continue;
                     r.enabled = false;
                 }
@@ -944,7 +900,7 @@ namespace MolimoByLulucaGameDev
 
         private Collider AutoFindDamageCollider()
         {
-            // search the first Trigger child (or in the own GO) that not is the bodyCollider
+
             Collider[] all = GetComponentsInChildren<Collider>(true);
             for (int i = 0; i < all.Length; i++)
             {

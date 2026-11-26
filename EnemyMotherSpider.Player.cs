@@ -3,12 +3,10 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Provides the enemy mother spider component.
-    /// </summary>
+
     public partial class EnemyMotherSpider
     {
-        // ---------- Player runtime ----------
+
         private Collider[] _playerColliders;
         private Collider[] _spiderSolidColliders;
         private bool _playerCollisionIgnored;
@@ -18,7 +16,6 @@ namespace MolimoByLulucaGameDev
         private bool _warnedBrainNotOperational;
         private bool _wasDetectingPlayer;
 
-        // ---------- Colliders ----------
         private void CacheSpiderSolidColliders()
         {
             Collider[] all = GetComponentsInChildren<Collider>(true);
@@ -102,7 +99,6 @@ namespace MolimoByLulucaGameDev
             if (logPlayerCollision) Debug.Log($"[EnemyMotherSpider] PushAway: dist {dist:F2} → {minDistance:F2}.");
         }
 
-        // ---------- Player life tracking ----------
         private void TrackPlayerLifeState()
         {
             if (playerTarget == null) return;
@@ -137,7 +133,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        // ---------- Detection ----------
         private void TrackDetectionEvents()
         {
             if (!HasPlayer()) return;
@@ -156,12 +151,10 @@ namespace MolimoByLulucaGameDev
                 OnPlayerLost?.Invoke();
                 if (logStates) Debug.Log("[EnemyMotherSpider] Player PERDIDO.");
 
-                // Player completely outside the alcance → returns to casa
                 if (_state == State.Chase) EnterReturnHome();
             }
         }
 
-        // ---------- Resolution ----------
         private void ResolvePlayer()
         {
             bool hadPlayer = playerTarget != null;

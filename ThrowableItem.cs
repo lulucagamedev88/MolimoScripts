@@ -4,9 +4,7 @@ namespace MolimoByLulucaGameDev
 {
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(Collider))]
-    /// <summary>
-    /// Provides the throwable item component.
-    /// </summary>
+
     public class ThrowableItem : MonoBehaviour
     {
         [Header("settings of damage")]
@@ -40,13 +38,8 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        /// <summary>
-        /// Performs the activate damage operation.
-        /// </summary>
         public void ActivateDamage() => _canDamage = true;
-        /// <summary>
-        /// Performs the deactivate damage operation.
-        /// </summary>
+
         public void DeactivateDamage() => _canDamage = false;
 
         private void OnCollisionEnter(Collision collision)
@@ -63,7 +56,6 @@ namespace MolimoByLulucaGameDev
                     collision.rigidbody.AddForce(pushDir * impactForce, ForceMode.Impulse);
                 }
 
-                // plays the sound criando the object temporary is the audio not be cut when the item is destroyed
                 if (impactSound != null && impactSound.clip != null)
                 {
                     GameObject soundGO = new GameObject("TempImpactSFX");
@@ -72,14 +64,13 @@ namespace MolimoByLulucaGameDev
                     AudioSource source = soundGO.AddComponent<AudioSource>();
                     source.clip = impactSound.clip;
                     source.volume = impactSound.volume;
-                    source.pitch = impactSound.GetPitch(); // uses the variation of pitch of the its SoundData
-                    source.spatialBlend = 1f; // Torna the sound 3D
+                    source.pitch = impactSound.GetPitch();
+                    source.spatialBlend = 1f;
                     source.minDistance = impactSound.minDistance;
                     source.maxDistance = impactSound.maxDistance;
 
                     source.Play();
 
-                    // destroys the object of audio after the end of the clip
                     Destroy(soundGO, impactSound.clip.length);
                 }
 

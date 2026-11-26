@@ -4,21 +4,14 @@ using UnityEngine;
 namespace MolimoByLulucaGameDev
 {
     [RequireComponent(typeof(Rigidbody))]
-    /// <summary>
-    /// Provides the enemy mother spider component.
-    /// </summary>
+
     public partial class EnemyMotherSpider : MonoBehaviour, IDamageable
     {
-        /// <summary>
-        /// Defines the available rotation mode values.
-        /// </summary>
+
         public enum RotationMode { Locked, EightDirections }
-        /// <summary>
-        /// Defines the available state values.
-        /// </summary>
+
         public enum State { Idle, Chase, Prepare, Jump, LandAttack, SecondaryAttack, Rest, Turn, ReturnHome, Stagger, Dead }
 
-        // ---------- Path / Chase Linear ----------
         [Header("Path / Chase Linear")]
         [Tooltip("path primary (lado the). must start in Home (center).")]
         [SerializeField] private Transform[] pathWaypoints;
@@ -29,7 +22,6 @@ namespace MolimoByLulucaGameDev
 
         [SerializeField] private bool constrainToPath = true;
 
-        // ---------- References ----------
         [Header("References")]
         [SerializeField] private Transform playerTarget;
         [SerializeField] private PlayerBrain playerBrain;
@@ -191,29 +183,16 @@ namespace MolimoByLulucaGameDev
         [SerializeField] private bool logAttackDecision = false;
         [SerializeField] private bool logPath = false;
 
-        /// <summary>
-        /// Raised when on health changed changes.
-        /// </summary>
         public event System.Action<float, float> OnHealthChanged;
-        /// <summary>
-        /// Raised when on death changes.
-        /// </summary>
+
         public event System.Action OnDeath;
-        /// <summary>
-        /// Raised when on rest start changes.
-        /// </summary>
+
         public event System.Action OnRestStart;
-        /// <summary>
-        /// Raised when on rest end changes.
-        /// </summary>
+
         public event System.Action OnRestEnd;
-        /// <summary>
-        /// Raised when on player detected changes.
-        /// </summary>
+
         public event System.Action OnPlayerDetected;
-        /// <summary>
-        /// Raised when on player lost changes.
-        /// </summary>
+
         public event System.Action OnPlayerLost;
 
         public float CurrentHealth => currentHealth;

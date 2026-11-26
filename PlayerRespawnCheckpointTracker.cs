@@ -1,22 +1,3 @@
-// -----------------------------------------------------------------------------
-//  RespawnCheckpointTracker.cs
-//  MolimoByLulucaGameDev
-//
-//  Rastreia continuamente the last point "safe" of the player
-//  (ground estavel, without estar in roll/dash/knockback) and the provides
-//  is the AbyssHazardTrigger.
-//
-//  Rules:
-//    - only records when the Player is Grounded there is by less
-//      minGroundedTimeToRecord seconds (prevents gravar in quinas of platform).
-//    - only records if the Player if moved when the less minDistanceToUpdate of the last point.
-//    - not records during Knockdown / Suspended / dead.
-//    - NOVO: only records if houver ground when the redor (ring of raycasts).
-//    - NOVO: snap when the ground real (Y exact).
-//    - NOVO: knockback in the respawn in direction when the center of the platform.
-//    - NOVO: history of checkpoints is fallback.
-// -----------------------------------------------------------------------------
-
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -24,9 +5,7 @@ namespace MolimoByLulucaGameDev
 {
     [DisallowMultipleComponent]
     [AddComponentMenu("Molimo By Luluca/Respawn Checkpoint Tracker")]
-    /// <summary>
-    /// Provides the player respawn checkpoint tracker component.
-    /// </summary>
+
     public sealed class PlayerRespawnCheckpointTracker : MonoBehaviour
     {
         #region Inspector
@@ -131,7 +110,6 @@ namespace MolimoByLulucaGameDev
             rb = GetComponent<Rigidbody>();
             if (rb == null) rb = GetComponentInParent<Rigidbody>();
 
-            // seed initial (only is promovida the "valid" after primeira recording)
             lastSafePosition = transform.position;
             lastSafeRotation = transform.rotation;
             hasValidCheckpoint = false;
@@ -139,8 +117,7 @@ namespace MolimoByLulucaGameDev
 
         private void Start()
         {
-            // tries semear the checkpoint initial already validado (useful if the scene
-            // starts with the Player in foot numa platform safe).
+
             if (groundLayer.value != 0 && TryValidateCheckpointPosition(transform.position, out Vector3 refined, out _))
             {
                 RecordCheckpoint(refined, transform.rotation);
@@ -151,37 +128,33 @@ namespace MolimoByLulucaGameDev
 
         private void Update()
         {
-            // not rastreia while dead, in knockdown or suspenso
+
             if (brain != null && !brain.IsAlive) return;
             if (brain != null && brain.IsKnockedDown) return;
             if (movement != null && movement.IsSuspended) return;
 
-            // Acumula time grounded
             if (IsConsideredGrounded())
                 groundedTimer += Time.deltaTime;
             else
                 groundedTimer = 0f;
 
-            // Timer of recording
             recordTimer += Time.deltaTime;
             if (recordTimer < recordInterval) return;
             recordTimer = 0f;
 
-            // Requisitos is gravar
             if (requireGrounded && groundedTimer < minGroundedTimeToRecord) return;
 
             Vector3 currentPos = transform.position;
             Vector3 candidatePos;
             Quaternion candidateRot = transform.rotation;
 
-            // ---- layer 1: valid the position current ----
             if (TryValidateCheckpointPosition(currentPos, out Vector3 refinedPos, out Vector3 pushDir))
             {
                 candidatePos = refinedPos;
             }
             else
             {
-                // ---- layer 2: tries empurrar is inside the platform ----
+
                 if (pushAwayFromEdges && pushDir.sqrMagnitude > 0.001f)
                 {
                     Vector3 pushed = currentPos + pushDir.normalized * validationRadius;
@@ -195,7 +168,7 @@ namespace MolimoByLulucaGameDev
                     }
                     else
                     {
-                        // nor empurrando resolveu — keeps the checkpoint previous.
+
                         if (debugValidation)
                             Debug.Log("[checkpoint] edge detectada; push falhou. Mantendo checkpoint previous.");
                         return;
@@ -203,14 +176,13 @@ namespace MolimoByLulucaGameDev
                 }
                 else
                 {
-                    // without pushDir useful — keeps the previous.
+
                     if (debugValidation)
                         Debug.Log("[checkpoint] without ground when the redor; mantendo checkpoint previous.");
                     return;
                 }
             }
 
-            // ---- layer 3: only records if actually if afastou ----
             if (!hasValidCheckpoint || Vector3.Distance(candidatePos, lastSafePosition) >= minDistanceToUpdate)
             {
                 RecordCheckpoint(candidatePos, candidateRot);
@@ -236,7 +208,6 @@ namespace MolimoByLulucaGameDev
         {
             if (movement != null) return movement.IsGrounded;
 
-            // Fallback without PlayerMovement: checa speed vertical
             if (rb != null) return Mathf.Abs(rb.linearVelocity.y) < 0.1f;
 
             return true;
@@ -246,36 +217,27 @@ namespace MolimoByLulucaGameDev
 
         #region validation of ground
 
-        /// <summary>
-        /// Verifica se a posição candidata está sobre chão suficiente.
-        /// Retorna:
-        ///   - true  + refinedPos com Y ajustado ao chão real
-        ///   - false + pushDir = direção sugerida para empurrar (oposta às bordas)
-        /// </summary>
         private bool TryValidateCheckpointPosition(Vector3 candidatePos, out Vector3 refinedPos, out Vector3 pushDir)
         {
             refinedPos = candidatePos;
             pushDir = Vector3.zero;
 
-            if (groundLayer.value == 0) return true; // validation desligada
+            if (groundLayer.value == 0) return true;
 
-            // 1) ground in the center?
             Vector3 centerOrigin = candidatePos + Vector3.up * groundProbeHeight;
             float rayLength = groundProbeHeight + groundProbeDistance;
 
             if (!Physics.Raycast(centerOrigin, Vector3.down, out RaycastHit centerHit,
                                  rayLength, groundLayer, QueryTriggerInteraction.Ignore))
             {
-                // not there is ground nor in the center — without pushDir useful.
+
                 if (debugValidation)
                     Debug.LogWarning($"[checkpoint] without ground in the center of {candidatePos}.");
                 return false;
             }
 
-            // 2) ring of amostragem
             int missingCount = CollectUnsafeGroundSamples(candidatePos, out Vector3 unsafeAccum);
 
-            // if all the amostras acharam ground → position valid.
             if (missingCount == 0)
             {
                 refinedPos = new Vector3(
@@ -285,8 +247,6 @@ namespace MolimoByLulucaGameDev
                 return true;
             }
 
-            // there are edges next. pushDir aponta is the lado opposite when the sum
-            // of the directions without ground (or is, "is inside" of the platform).
             if (unsafeAccum.sqrMagnitude > 0.001f)
                 pushDir = -unsafeAccum.normalized;
 
@@ -332,19 +292,11 @@ namespace MolimoByLulucaGameDev
 
         #region API Public
 
-        /// <summary>
-        /// Devolve o ponto de respawn.
-        ///   - Se smartBackUp = true, recua em direção ao centro da plataforma
-        ///     (oposto às bordas detectadas), em vez de apenas "para trás".
-        ///   - Se a posição final ainda falhar a validação, percorre o histórico
-        ///     do mais recente ao mais antigo, usando o primeiro que validar.
-        /// </summary>
         public void GetRespawnPoint(float backUpDistance, out Vector3 position, out Quaternion rotation)
         {
             position = lastSafePosition;
             rotation = lastSafeRotation;
 
-            // 1) knockback
             if (backUpDistance > 0.001f)
             {
                 Vector3 backupDir = smartBackUp
@@ -354,7 +306,6 @@ namespace MolimoByLulucaGameDev
                 position -= backupDir * backUpDistance;
             }
 
-            // 2) Re-validation
             if (groundLayer.value != 0)
             {
                 if (TryValidateCheckpointPosition(position, out Vector3 validated, out _))
@@ -363,7 +314,6 @@ namespace MolimoByLulucaGameDev
                     return;
                 }
 
-                // tries the history, of the more recente when the more old.
                 for (int i = history.Count - 1; i >= 0; i--)
                 {
                     if (TryValidateCheckpointPosition(history[i].position, out Vector3 validPos, out _))
@@ -382,10 +332,6 @@ namespace MolimoByLulucaGameDev
             }
         }
 
-        /// <summary>
-        /// Direção de recuo segura: oposta às bordas detectadas ao redor do
-        /// último checkpoint. Se não houver bordas, recua "para trás" do personagem.
-        /// </summary>
         private Vector3 GetSafeBackupDirection()
         {
             if (groundLayer.value == 0)
@@ -400,12 +346,6 @@ namespace MolimoByLulucaGameDev
             return -unsafeAccum.normalized;
         }
 
-        /// <summary>
-        /// Permite que um checkpoint externo (ex.: um Trigger em checkpoint)
-        /// sobrescreva o último ponto gravado.
-        /// Se a validação estiver ativa e a posição não validar, ele ainda
-        /// registra (o designer assumiu o controle), mas avisa no Console.
-        /// </summary>
         public void ForceCheckpoint(Vector3 position, Quaternion rotation)
         {
             if (groundLayer.value != 0)
@@ -425,18 +365,12 @@ namespace MolimoByLulucaGameDev
             RecordCheckpoint(position, rotation);
         }
 
-        /// <summary>
-        /// Performs the force checkpoint operation.
-        /// </summary>
         public void ForceCheckpoint(Transform target)
         {
             if (target == null) return;
             ForceCheckpoint(target.position, target.rotation);
         }
 
-        /// <summary>
-        /// Limpa o checkpoint (o próximo respawn usará o fallback do AbyssHazardTrigger).
-        /// </summary>
         public void ClearCheckpoint()
         {
             hasValidCheckpoint = false;
@@ -451,17 +385,14 @@ namespace MolimoByLulucaGameDev
         {
             if (!Application.isPlaying || !hasValidCheckpoint) return;
 
-            // checkpoint primary
             Gizmos.color = new Color(0.30f, 1f, 0.50f, 0.9f);
             Gizmos.DrawWireSphere(lastSafePosition, 0.4f);
 
-            // Seta apontando is "forward" of the rotation gravada
             Gizmos.color = Color.yellow;
             Vector3 tip = lastSafePosition + lastSafeRotation * Vector3.forward * 1.2f;
             Gizmos.DrawLine(lastSafePosition, tip);
             Gizmos.DrawSphere(tip, 0.12f);
 
-            // ring of validation (green = ground, red = without ground)
             if (groundLayer.value != 0 && validationRadius > 0f)
             {
                 int samples = Mathf.Max(4, validationSampleCount);
@@ -483,7 +414,6 @@ namespace MolimoByLulucaGameDev
                 }
             }
 
-            // history (optional, in blue light)
             if (history.Count > 0)
             {
                 Gizmos.color = new Color(0.4f, 0.7f, 1f, 0.5f);

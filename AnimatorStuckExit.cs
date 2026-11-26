@@ -3,23 +3,11 @@ using UnityEngine;
 
 namespace MolimoByLulucaGameDev
 {
-    /// <summary>
-    /// Watchdog externo para o Animator.
-    /// Força saída de qualquer state que trave (animação não sai mesmo após o fim).
-    ///
-    /// COMO USAR:
-    ///   1. Anexe ao GameObject do Player (que tem o Animator).
-    ///   2. Preencha 'fallbackStateName' com o state de segurança (ex: "Locomotion").
-    ///   3. Play. Pronto.
-    ///
-    /// Não precisa listar states nem parâmetros — é tudo automático.
-    /// </summary>
+
     [RequireComponent(typeof(Animator))]
     public class AnimatorStuckExit : MonoBehaviour
     {
-        // ============================================================
-        // configuration
-        // ============================================================
+
         [Header("Fallback")]
         [Tooltip("Nome exact of the state is where force the exit when travar.")]
         [SerializeField] private string fallbackStateName = "Locomotion";
@@ -51,9 +39,6 @@ namespace MolimoByLulucaGameDev
         [SerializeField] private bool logEvents = true;
         [SerializeField] private bool logEveryFrame = false;
 
-        // ============================================================
-        // RUNTIME
-        // ============================================================
         private Animator animator;
 
         private int lastStateHash;
@@ -64,13 +49,9 @@ namespace MolimoByLulucaGameDev
         private bool isMonitoring;
         private bool isLoopingCurrent;
 
-        // parameters of the Animator — cacheados in the Awake is reset fast.
         private readonly List<string> allBoolParams = new List<string>();
         private readonly List<string> allTriggerParams = new List<string>();
 
-        // ============================================================
-        // LIFECYCLE
-        // ============================================================
         private void Awake()
         {
             animator = GetComponent<Animator>();
@@ -116,7 +97,6 @@ namespace MolimoByLulucaGameDev
             AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(animatorLayerIndex);
             int hash = info.shortNameHash;
 
-            // change of state — resets monitoramento
             if (hash != lastStateHash)
             {
                 EnterState(info, hash);
@@ -128,9 +108,6 @@ namespace MolimoByLulucaGameDev
             CheckStuck(info);
         }
 
-        // ============================================================
-        // core
-        // ============================================================
         private void EnterState(AnimatorStateInfo info, int hash)
         {
             lastStateHash = hash;
@@ -162,10 +139,8 @@ namespace MolimoByLulucaGameDev
             float elapsed = Time.time - stateEnterTime;
             float norm = info.normalizedTime;
 
-            // detection 1: time real excedeu
             bool timedOut = elapsed >= stateTimeoutSeconds;
 
-            // detection 2: normalizedTime congelado
             bool frozen = false;
             if (elapsed > 0.1f)
             {
@@ -195,11 +170,7 @@ namespace MolimoByLulucaGameDev
 
         private bool IsLoopingState(AnimatorStateInfo info)
         {
-            // the Animator not exposes "isLooping" directly. heuristic:
-            // if normalizedTime continues crescendo beyond of 1 and not is negativo,
-            // is loop. the not have history here, usamos the approach:
-            // tratamos the "possivelmente loop" any state cujo length is
-            // very pequeno or cujo nome contenha termos typical.
+
             string name = GetStateName(info).ToLowerInvariant();
             return name.Contains("locomotion")
                 || name.Contains("idle")
@@ -211,9 +182,7 @@ namespace MolimoByLulucaGameDev
 
         private string GetStateName(AnimatorStateInfo info)
         {
-            // not there is API direct is pegar nome by hash; extraimos via clip.
-            // AnimatorStateInfo does not expose the name; we use the convention:
-            // comparamos with the states that conhecemos by clip current.
+
             var clips = animator.GetCurrentAnimatorClipInfo(animatorLayerIndex);
             if (clips != null && clips.Length > 0 && clips[0].clip != null)
                 return clips[0].clip.name;
@@ -221,9 +190,6 @@ namespace MolimoByLulucaGameDev
             return $"hash:{info.shortNameHash}";
         }
 
-        // ============================================================
-        // FORCE EXIT
-        // ============================================================
         private void ForceExit(string stateName, string reason)
         {
             if (string.IsNullOrEmpty(fallbackStateName))
@@ -235,45 +201,29 @@ namespace MolimoByLulucaGameDev
             Debug.LogWarning($"[AnimatorStuckExit] ⚠ STUCK in '{stateName}'. Motivo: {reason}. " +
                              $"forcing → '{fallbackStateName}'.");
 
-            // 1. Reseta all the bools of the Animator
             foreach (var b in allBoolParams)
                 animator.SetBool(b, false);
 
-            // 2. Reseta all the triggers
             foreach (var t in allTriggerParams)
                 animator.ResetTrigger(t);
 
-            // 3. force exit
             if (fallbackCrossFade > 0f)
                 animator.CrossFadeInFixedTime(fallbackStateName, fallbackCrossFade, animatorLayerIndex, 0f);
             else
                 animator.Play(fallbackStateName, animatorLayerIndex, 0f);
 
-            // 4. Re-weapon
             isMonitoring = false;
             lastStateHash = 0;
             frozenFrames = 0;
             lastNormalizedTime = 0f;
         }
 
-        // ============================================================
-        // API Public
-        // ============================================================
-
-        /// <summary>force exit imediatamente, independente of detection.</summary>
-        /// <summary>
-        /// Performs the force exit now operation.
-        /// </summary>
         public void ForceExitNow(string reason = "call manual")
         {
             AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(animatorLayerIndex);
             ForceExit(GetStateName(info), reason);
         }
 
-        /// <summary>returns the nome of the state current (via clip).</summary>
-        /// <summary>
-        /// Returns current state name.
-        /// </summary>
         public string GetCurrentStateName()
         {
             AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(animatorLayerIndex);
